@@ -10,6 +10,15 @@ class Empresa(models.Model):
 
     servicos = models.ManyToManyField('servico.Servico', related_name='servicos')
 
+    horario_abertura_dia_semana = models.TimeField()
+    horario_fechamento_dia_semana = models.TimeField()
+
+    horario_abertura_fim_de_semana = models.TimeField()
+    horario_fechamento_fim_de_semana = models.TimeField()
+
+    abre_sabado = models.BooleanField()
+    abre_domingo = models.BooleanField()
+
     def __str__(self):
         return self.nome
     
