@@ -15,8 +15,12 @@ class Empresa(models.Model):
     horario_abertura_dia_semana = models.TimeField()
     horario_fechamento_dia_semana = models.TimeField()
 
-    horario_abertura_fim_de_semana = models.TimeField()
-    horario_fechamento_fim_de_semana = models.TimeField()
+    para_almoço = models.BooleanField(default=False)
+    horario_pausa_inicio = models.TimeField(null=True, blank=True)
+    horario_pausa_fim = models.TimeField(null=True, blank=True)
+
+    horario_abertura_fim_de_semana = models.TimeField(null=True, blank=True)
+    horario_fechamento_fim_de_semana = models.TimeField(null=True, blank=True)
 
     abre_sabado = models.BooleanField()
     abre_domingo = models.BooleanField()
