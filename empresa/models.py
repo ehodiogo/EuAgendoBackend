@@ -2,11 +2,13 @@ from django.db import models
 
 class Empresa(models.Model):
 
-    nome = models.CharField(max_length=100)
+    nome = models.CharField(max_length=200, unique=True)
     cnpj = models.CharField(max_length=100)
     endereco = models.CharField(max_length=100)
     telefone = models.CharField(max_length=100)
     email = models.EmailField(max_length=100)
+
+    logo = models.ForeignKey('core.Imagem', on_delete=models.CASCADE, related_name='logo', null=True, blank=True)
 
     servicos = models.ManyToManyField('servico.Servico', related_name='servicos')
 

@@ -25,8 +25,62 @@ SECRET_KEY = 'django-insecure-njpai4x6mrb3_6bp_9bb$3bun7m%!zzd*j!ng&8)z8ivphfx!!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
 
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "spotthemapbackend-production.up.railway.app",
+    "spotthemapfrontend-production.up.railway.app",
+    "spotthemap.tech",
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "https://spotthemapbackend-production.up.railway.app",
+    "https://spotthemapfrontend-production.up.railway.app",
+    "https://spotthemap.tech",
+    "http://spotthemap.tech",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "https://spotthemapbackend-production.up.railway.app",
+    "https://spotthemapfrontend-production.up.railway.app",
+    "https://spotthemap.tech",
+    "http://spotthemap.tech",
+]
+
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "https://spotthemapbackend-production.up.railway.app",
+    "https://spotthemapfrontend-production.up.railway.app",
+    "https://spotthemap.tech",
+    "http://spotthemap.tech",
+]
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "DELETE",
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 # Application definition
 

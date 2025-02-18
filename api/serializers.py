@@ -25,9 +25,15 @@ class ImagemSerializer(serializers.ModelSerializer):
 
 
 class EmpresaSerializer(serializers.ModelSerializer):
+
+    logo = serializers.SerializerMethodField()
+
+    def get_logo(self, obj):
+        return obj.logo.imagem.url
+    
     class Meta:
         model = Empresa
-        fields = "__all__"
+        fields = "nome", "cnpj", "endereco", "telefone", "email", "logo", "servicos", "horario_abertura_dia_semana", "horario_fechamento_dia_semana", "horario_abertura_fim_de_semana", "horario_fechamento_fim_de_semana", "abre_sabado", "abre_domingo"
 
 
 class FuncionarioSerializer(serializers.ModelSerializer):
