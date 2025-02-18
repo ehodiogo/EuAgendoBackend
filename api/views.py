@@ -1,4 +1,12 @@
-from .serializers import AgendamentoSerializer, ClienteSerializer, EmpresaSerializer, FuncionarioSerializer, ImagemSerializer, ServicoSerializer
+from .serializers import (
+    AgendamentoSerializer,
+    ClienteSerializer,
+    EmpresaSerializer,
+    FuncionarioSerializer,
+    ImagemSerializer,
+    ServicoSerializer,
+    EmpresaServicoFuncionarioSerializer,
+)
 from agendamento.models import Agendamento
 from cliente.models import Cliente
 from core.models import Imagem
@@ -77,3 +85,25 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
 class ServicoViewSet(viewsets.ModelViewSet):
     queryset = Servico.objects.all()
     serializer_class = ServicoSerializer
+
+
+class EmpresaServicoViewSet(viewsets.ModelViewSet):
+    queryset = Empresa.objects.all()
+    serializer_class = EmpresaServicoFuncionarioSerializer
+
+    # Filtra empresas pelo nome ou cnpj
+    @action(detail=False, methods=["get"])
+    def filtrar_por_empresa(self, request):
+        nome = request.query_params.get("nome", None)
+        cnpj = request.query_params.get("cnpj", None)
+
+        if nome:
+            empresas = Empresa.objects.filter(nome__icontains=nome)
+        elif cnpj:
+            empresas = Empresa.objects.filter(cnpj__icontains=cnpj)
+        else:
+            return Response({"error": "Informe o nome ou CNPJ da empresa."})
+
+        # Serialize as empresas encontradas
+        serializer = self.get_serializer(empresas, many=True)
+        return Response(serializer.data)

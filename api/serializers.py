@@ -24,6 +24,11 @@ class ImagemSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ServicoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Servico
+        fields = "__all__"
+
 class EmpresaSerializer(serializers.ModelSerializer):
 
     logo = serializers.SerializerMethodField()
@@ -54,13 +59,39 @@ class EmpresaSerializer(serializers.ModelSerializer):
         fields = "nome", "cnpj", "endereco", "telefone", "email", "logo", "servicos", "horario_abertura_dia_semana", "horario_fechamento_dia_semana", "horario_abertura_fim_de_semana", "horario_fechamento_fim_de_semana", "abre_sabado", "abre_domingo", "para_almoço", "horario_pausa_inicio", "horario_pausa_fim", "funcionarios"
 
 
-class FuncionarioSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Funcionario
-        fields = "__all__"
-
-
-class ServicoSerializer(serializers.ModelSerializer):
+class ServicosFuncionarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Servico
-        fields = "__all__"
+        fields = 'id', 'nome'
+
+
+class FuncionarioSerializer(serializers.ModelSerializer):
+
+    foto_url = serializers.SerializerMethodField()
+
+    def get_foto_url(self, obj):
+        return obj.foto.imagem.url if obj.foto else None
+    
+    class Meta:
+        model = Funcionario
+        fields = "id", "nome", "foto_url"
+
+class ServicoFuncionarioSerializer(serializers.ModelSerializer):
+
+    servicos = ServicosFuncionarioSerializer(many=True)
+    foto_url = serializers.SerializerMethodField()
+
+    def get_foto_url(self, obj):
+        return obj.foto.imagem.url if obj.foto else None
+    
+    class Meta:
+        model = Funcionario
+        fields = ["id", "nome", "foto_url", "servicos"]
+
+class EmpresaServicoFuncionarioSerializer(serializers.ModelSerializer):
+
+    funcionarios = ServicoFuncionarioSerializer(many=True)
+
+    class Meta:
+        model = Empresa
+        fields = ['nome', 'cnpj', 'funcionarios']
