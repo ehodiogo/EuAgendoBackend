@@ -30,7 +30,6 @@ class ServicoSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class EmpresaSerializer(serializers.ModelSerializer):
-
     logo = serializers.SerializerMethodField()
     servicos = serializers.SerializerMethodField()
     funcionarios = serializers.SerializerMethodField()
@@ -40,7 +39,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
 
     def get_servicos(self, obj):
         return [
-            f"{servico.nome} - R${servico.preco} - {servico.duracao}"
+            {"nome": servico.nome, "preco": servico.preco, "duracao": servico.duracao}
             for servico in obj.servicos.all()
         ]
 
@@ -56,8 +55,25 @@ class EmpresaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Empresa
-        fields = "nome", "cnpj", "endereco", "telefone", "email", "logo", "servicos", "horario_abertura_dia_semana", "horario_fechamento_dia_semana", "horario_abertura_fim_de_semana", "horario_fechamento_fim_de_semana", "abre_sabado", "abre_domingo", "para_almoço", "horario_pausa_inicio", "horario_pausa_fim", "funcionarios"
-
+        fields = (
+            "nome",
+            "cnpj",
+            "endereco",
+            "telefone",
+            "email",
+            "logo",
+            "servicos",
+            "horario_abertura_dia_semana",
+            "horario_fechamento_dia_semana",
+            "horario_abertura_fim_de_semana",
+            "horario_fechamento_fim_de_semana",
+            "abre_sabado",
+            "abre_domingo",
+            "para_almoço",
+            "horario_pausa_inicio",
+            "horario_pausa_fim",
+            "funcionarios",
+        )
 
 class ServicosFuncionarioSerializer(serializers.ModelSerializer):
     class Meta:

@@ -21,7 +21,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 class AgendamentoViewSet(viewsets.ModelViewSet):
     queryset = Agendamento.objects.all()
     serializer_class = AgendamentoSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["funcionario"]
 
+    def get_renderers(self):
+        """Garante que a API só use JSON, evitando erro de template"""
+        from rest_framework.renderers import JSONRenderer
+        return [JSONRenderer()]
 
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
@@ -86,12 +92,21 @@ class ServicoViewSet(viewsets.ModelViewSet):
     queryset = Servico.objects.all()
     serializer_class = ServicoSerializer
 
+    def get_queryset(self):
+        ids = self.request.query_params.get("ids", None)
+
+        if ids:
+            ids = [int(id) for id in ids.split(",")]
+            return Servico.objects.filter(id__in=ids) 
+        else:
+            return (
+                Servico.objects.all()
+            ) 
 
 class EmpresaServicoViewSet(viewsets.ModelViewSet):
     queryset = Empresa.objects.all()
     serializer_class = EmpresaServicoFuncionarioSerializer
 
-    # Filtra empresas pelo nome ou cnpj
     @action(detail=False, methods=["get"])
     def filtrar_por_empresa(self, request):
         nome = request.query_params.get("nome", None)
@@ -104,6 +119,5 @@ class EmpresaServicoViewSet(viewsets.ModelViewSet):
         else:
             return Response({"error": "Informe o nome ou CNPJ da empresa."})
 
-        # Serialize as empresas encontradas
         serializer = self.get_serializer(empresas, many=True)
         return Response(serializer.data)
