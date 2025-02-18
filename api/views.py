@@ -8,6 +8,7 @@ from servico.models import Servico
 from rest_framework import viewsets,filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from django_filters.rest_framework import DjangoFilterBackend
 
 class AgendamentoViewSet(viewsets.ModelViewSet):
     queryset = Agendamento.objects.all()
@@ -50,8 +51,27 @@ class EmpresaViewSet(viewsets.ModelViewSet):
 
 
 class FuncionarioViewSet(viewsets.ModelViewSet):
-    queryset = Funcionario.objects.all()
     serializer_class = FuncionarioSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = [
+        "nome",
+        "empresas__nome",
+        "empresas__cnpj",
+    ]
+
+    queryset = Funcionario.objects.all()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        empresa_nome = self.request.query_params.get("empresa_nome")
+        empresa_cnpj = self.request.query_params.get("empresa_cnpj")
+
+        if empresa_nome:
+            queryset = queryset.filter(empresas__nome__icontains=empresa_nome)
+        if empresa_cnpj:
+            queryset = queryset.filter(empresas__cnpj__icontains=empresa_cnpj)
+
+        return queryset
 
 
 class ServicoViewSet(viewsets.ModelViewSet):

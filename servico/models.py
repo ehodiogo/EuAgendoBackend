@@ -7,7 +7,7 @@ class Servico(models.Model):
     duracao = models.DurationField()
     preco = models.DecimalField(max_digits=5, decimal_places=2)
 
-    funcionarios = models.ManyToManyField('funcionario.Funcionario', related_name='funcionarios')
+    funcionarios = models.ManyToManyField('funcionario.Funcionario', related_name='servicos')
 
     def __str__(self):
         return self.nome

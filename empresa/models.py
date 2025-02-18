@@ -21,6 +21,8 @@ class Empresa(models.Model):
     abre_sabado = models.BooleanField()
     abre_domingo = models.BooleanField()
 
+    funcionarios = models.ManyToManyField('funcionario.Funcionario', related_name='empresas')
+
     def __str__(self):
         return self.nome
     

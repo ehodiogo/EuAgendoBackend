@@ -27,9 +27,16 @@ class ImagemSerializer(serializers.ModelSerializer):
 class EmpresaSerializer(serializers.ModelSerializer):
 
     logo = serializers.SerializerMethodField()
+    servicos = serializers.SerializerMethodField()
 
     def get_logo(self, obj):
         return obj.logo.imagem.url
+    
+    def get_servicos(self, obj):
+        return [
+            f"{servico.nome} - R${servico.preco} - {servico.duracao}"
+            for servico in obj.servicos.all()
+        ]
     
     class Meta:
         model = Empresa
