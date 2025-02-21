@@ -20,6 +20,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
 from rest_framework import status
 from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_date
 
 class AgendamentoViewSet(viewsets.ModelViewSet):
     queryset = Agendamento.objects.all()
@@ -199,3 +200,48 @@ class AgendamentoCreateView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+class FuncionarioAgendamentoView(APIView):
+    def get(self, request, *args, **kwargs):
+        id_funcionario = request.query_params.get("id_funcionario")
+        data_str = request.query_params.get(
+            "data"
+        ) 
+
+        print("ID Funcionario:", id_funcionario)
+        print("Data:", data_str)
+
+        if not id_funcionario or not data_str:
+            return Response(
+                {"erro": "Os parâmetros 'id_funcionario' e 'data' são obrigatórios."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            funcionario = Funcionario.objects.get(id=id_funcionario)
+        except Funcionario.DoesNotExist:
+            return Response(
+                {"erro": "Funcionário não encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            data = parse_date(data_str)
+            if not data:
+                raise ValueError("Data inválida.")
+        except ValueError:
+            return Response(
+                {"erro": "Data no formato inválido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        agendamentos = Agendamento.objects.filter(funcionario=funcionario, data=data)
+
+        if not agendamentos:
+            return Response(
+                [],
+                status=status.HTTP_200_OK,
+            )
+
+        serializer = AgendamentoSerializer(agendamentos, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

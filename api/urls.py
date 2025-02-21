@@ -1,4 +1,4 @@
-from .views import AgendamentoViewSet, ClienteViewSet, EmpresaViewSet, FuncionarioViewSet, ImagemViewSet, ServicoViewSet, EmpresaServicoViewSet, AgendamentoCreateView
+from .views import AgendamentoViewSet, ClienteViewSet, EmpresaViewSet, FuncionarioViewSet, ImagemViewSet, ServicoViewSet, EmpresaServicoViewSet, AgendamentoCreateView, FuncionarioAgendamentoView
 from rest_framework import routers
 from django.urls import path
 
@@ -14,5 +14,6 @@ router.register(r'empresaservico', EmpresaServicoViewSet, basename='empresaservi
 urlpatterns = router.urls
 
 urlpatterns += [
-    path('agendamento/create', AgendamentoCreateView.as_view(), name='agendamento-create')
+    path('agendamento/create', AgendamentoCreateView.as_view(), name='agendamento-create'),
+    path('agendamentos_funcionario/', FuncionarioAgendamentoView.as_view(), name='agendamentos_funcionario'),
 ]
