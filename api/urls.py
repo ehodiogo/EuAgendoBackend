@@ -14,5 +14,5 @@ router.register(r'empresaservico', EmpresaServicoViewSet, basename='empresaservi
 urlpatterns = router.urls
 
 urlpatterns += [
-    path('agendamento/create/', AgendamentoCreateView.as_view(), name='agendamento-create')
+    path('agendamento/create', AgendamentoCreateView.as_view(), name='agendamento-create')
 ]

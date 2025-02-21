@@ -167,11 +167,12 @@ class AgendamentoCreateView(APIView):
             )
 
         cliente, created = Cliente.objects.get_or_create(
-            nome=cliente_nome, email=cliente_email, numero=cliente_numero
+            nome=cliente_nome, email=cliente_email, telefone=cliente_numero
         )
 
         try:
-            servico = Servico.objects.get(nome=servico_nome)
+            # TODO
+            servico = Servico.objects.get(nome=servico_nome) # arrumar para puxar o serviço pelo funcionário
         except Servico.DoesNotExist:
             return Response(
                 {"erro": "Serviço não encontrado."}, status=status.HTTP_404_NOT_FOUND
@@ -185,7 +186,6 @@ class AgendamentoCreateView(APIView):
             servico=servico,
         )
 
-        # Retorna o agendamento criado
         return Response(
             {
                 "id": agendamento.id,
@@ -194,7 +194,7 @@ class AgendamentoCreateView(APIView):
                 "hora": agendamento.hora,
                 "cliente_nome": cliente.nome,
                 "cliente_email": cliente.email,
-                "cliente_numero": cliente.numero,
+                "cliente_numero": cliente.telefone,
                 "servico_nome": servico.nome,
             },
             status=status.HTTP_201_CREATED,
