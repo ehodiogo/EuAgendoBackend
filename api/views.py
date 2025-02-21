@@ -17,6 +17,9 @@ from rest_framework import viewsets,filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.views import APIView
+from rest_framework import status
+from django.utils.dateparse import parse_datetime
 
 class AgendamentoViewSet(viewsets.ModelViewSet):
     queryset = Agendamento.objects.all()
@@ -121,3 +124,78 @@ class EmpresaServicoViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(empresas, many=True)
         return Response(serializer.data)
+
+
+class AgendamentoCreateView(APIView):
+    def post(self, request, *args, **kwargs):
+
+        id_funcionario = request.data.get("id_funcionario")
+        data = request.data.get("data")
+        hora = request.data.get("hora")
+        cliente_nome = request.data.get("cliente_nome")
+        cliente_email = request.data.get("cliente_email")  
+        cliente_numero = request.data.get("cliente_numero") 
+        servico_nome = request.data.get("servico_nome")
+
+        if (
+            not id_funcionario
+            or not data
+            or not hora
+            or not cliente_nome
+            or not cliente_email
+            or not cliente_numero
+            or not servico_nome
+        ):
+            return Response(
+                {"erro": "Todos os campos são obrigatórios."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            data_hora = parse_datetime(f"{data}T{hora}:00")
+            if not data_hora:
+                raise ValueError("Data ou hora inválidos.")
+        except ValueError as e:
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            funcionario = Funcionario.objects.get(id=id_funcionario)
+        except Funcionario.DoesNotExist:
+            return Response(
+                {"erro": "Funcionário não encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        cliente, created = Cliente.objects.get_or_create(
+            nome=cliente_nome, email=cliente_email, numero=cliente_numero
+        )
+
+        try:
+            servico = Servico.objects.get(nome=servico_nome)
+        except Servico.DoesNotExist:
+            return Response(
+                {"erro": "Serviço não encontrado."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        agendamento = Agendamento.objects.create(
+            funcionario=funcionario,
+            data=data_hora.date(),
+            hora=data_hora.time(),
+            cliente=cliente,
+            servico=servico,
+        )
+
+        # Retorna o agendamento criado
+        return Response(
+            {
+                "id": agendamento.id,
+                "funcionario": funcionario.nome,
+                "data": agendamento.data,
+                "hora": agendamento.hora,
+                "cliente_nome": cliente.nome,
+                "cliente_email": cliente.email,
+                "cliente_numero": cliente.numero,
+                "servico_nome": servico.nome,
+            },
+            status=status.HTTP_201_CREATED,
+        )

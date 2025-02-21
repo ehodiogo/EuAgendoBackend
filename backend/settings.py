@@ -99,7 +99,9 @@ INSTALLED_APPS = [
     'servico',
     'funcionario',
     'core',
-    'api'
+    'api',
+    'plano',
+    'pagamento',
 ]
 
 MIDDLEWARE = [
