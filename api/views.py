@@ -24,6 +24,12 @@ from django.utils.dateparse import parse_date
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from .serializers import RegisterSerializer, LoginSerializer
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
+
+User = get_user_model()
+
 
 class AgendamentoViewSet(viewsets.ModelViewSet):
     queryset = Agendamento.objects.all()
@@ -256,8 +262,6 @@ class FuncionarioAgendamentoView(APIView):
         serializer = AgendamentoSerializer(agendamentos, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-User = get_user_model()
-
 class RegisterView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = RegisterSerializer(data=request.data)
@@ -290,3 +294,40 @@ class LoginView(APIView):
                 status=status.HTTP_200_OK,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordRecoveryView(APIView):
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email", None)
+
+        if not email:
+            return Response(
+                {"detail": "Email é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(email=email)
+
+            token = default_token_generator.make_token(user)
+
+            reset_url = f"{settings.FRONTEND_URL}/reset-password/?token={token}"
+
+            subject = "Recuperação de senha"
+            message = f"Para recuperar sua senha, clique no link abaixo:\n{reset_url}"
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+
+            return Response(
+                {"detail": "Link de recuperação de senha enviado!"},
+                status=status.HTTP_200_OK,
+            )
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Usuário com este email não encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )

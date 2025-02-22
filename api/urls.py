@@ -1,6 +1,6 @@
 from .views import AgendamentoViewSet, ClienteViewSet, EmpresaViewSet, FuncionarioViewSet
 from .views import ImagemViewSet, ServicoViewSet, EmpresaServicoViewSet, AgendamentoCreateView
-from .views import FuncionarioAgendamentoView, LoginView, RegisterView
+from .views import FuncionarioAgendamentoView, LoginView, RegisterView, PasswordRecoveryView
 from rest_framework import routers
 from django.urls import path
 
@@ -20,4 +20,5 @@ urlpatterns += [
     path('agendamentos_funcionario/', FuncionarioAgendamentoView.as_view(), name='agendamentos_funcionario'),
     path('login/', LoginView.as_view(), name='login'),
     path('register/', RegisterView.as_view(), name='register'),
+    path('password-recovery/', PasswordRecoveryView.as_view(), name='password_recovery'),
 ]

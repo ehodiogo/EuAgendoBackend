@@ -194,3 +194,12 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "seu-email@gmail.com"  # Seu email
+EMAIL_HOST_PASSWORD = "sua-senha"  # Sua senha
+DEFAULT_FROM_EMAIL = "seu-email@gmail.com"  # O mesmo email acima
+FRONTEND_URL = "http://localhost:8000"  # URL do frontend para onde o link de recuperação será enviado
