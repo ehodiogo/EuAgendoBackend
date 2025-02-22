@@ -100,8 +100,6 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
         if empresa_cnpj:
             empresa = Empresa.objects.filter(cnpj__icontains=empresa_cnpj)
 
-        print("Empresas encontradas:", empresa)
-
         if empresa:
             queryset = empresa[0].funcionarios.all()
 
@@ -141,7 +139,6 @@ class EmpresaServicoViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(empresas, many=True)
         return Response(serializer.data)
-
 
 class AgendamentoCreateView(APIView):
     def post(self, request, *args, **kwargs):
@@ -224,9 +221,6 @@ class FuncionarioAgendamentoView(APIView):
             "data"
         ) 
 
-        print("ID Funcionario:", id_funcionario)
-        print("Data:", data_str)
-
         if not id_funcionario or not data_str:
             return Response(
                 {"erro": "Os parâmetros 'id_funcionario' e 'data' são obrigatórios."},
@@ -279,7 +273,6 @@ class RegisterView(APIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class LoginView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = LoginSerializer(data=request.data)
@@ -294,7 +287,6 @@ class LoginView(APIView):
                 status=status.HTTP_200_OK,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class PasswordRecoveryView(APIView):
     def post(self, request, *args, **kwargs):
