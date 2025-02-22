@@ -27,9 +27,12 @@ from .serializers import RegisterSerializer, LoginSerializer
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
+from datetime import date
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 User = get_user_model()
-
 
 class AgendamentoViewSet(viewsets.ModelViewSet):
     queryset = Agendamento.objects.all()
@@ -46,11 +49,9 @@ class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
 
-
 class ImagemViewSet(viewsets.ModelViewSet):
     queryset = Imagem.objects.all()
     serializer_class = ImagemSerializer
-
 
 class EmpresaViewSet(viewsets.ModelViewSet):
     queryset = Empresa.objects.all()
@@ -75,7 +76,6 @@ class EmpresaViewSet(viewsets.ModelViewSet):
         empresas = Empresa.objects.filter(nome__icontains=termo) | Empresa.objects.filter(cnpj__icontains=termo)
         serializer = self.get_serializer(empresas, many=True)
         return Response(serializer.data)
-
 
 class FuncionarioViewSet(viewsets.ModelViewSet):
     serializer_class = FuncionarioSerializer
@@ -104,7 +104,6 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
             queryset = empresa[0].funcionarios.all()
 
         return queryset
-
 
 class ServicoViewSet(viewsets.ModelViewSet):
     queryset = Servico.objects.all()
@@ -278,11 +277,15 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data["user"]
+
             refresh = RefreshToken.for_user(user)
+
+            token, _ = Token.objects.get_or_create(user=user)
+
             return Response(
                 {
                     "refresh": str(refresh),
-                    "access": str(refresh.access_token),
+                    "access": str(token.key),
                 },
                 status=status.HTTP_200_OK,
             )
@@ -323,3 +326,46 @@ class PasswordRecoveryView(APIView):
                 {"detail": "Usuário com este email não encontrado."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+class AgendamentosHojeView(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        empresa_id = request.query_params.get("empresa_id")
+
+        if empresa_id:
+            agendamentos = Agendamento.objects.filter(data=date.today(), funcionario__empresas__id=empresa_id)
+            serializer = AgendamentoSerializer(agendamentos, many=True)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+    
+        return Response(
+            {"erro": "Parâmetro 'empresa_id' é obrigatório."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+class EmpresasUsuarioView(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        access_token = request.query_params.get("usuario_token")
+
+        if not access_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+        usuario = Token.objects.filter(key=access_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso inválido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        empresas = usuario.empresas.all()
+        serializer = EmpresaSerializer(empresas, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
