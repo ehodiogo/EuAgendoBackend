@@ -369,3 +369,33 @@ class EmpresasUsuarioView(APIView):
         serializer = EmpresaSerializer(empresas, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class UserView(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        access_token = request.query_params.get("usuario_token")
+
+        if not access_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        usuario = Token.objects.filter(key=access_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso inválido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {
+                "id": usuario.id,
+                "username": usuario.username,
+                "email": usuario.email,
+                "first_name": usuario.first_name,
+            },
+            status=status.HTTP_200_OK,
+        )
