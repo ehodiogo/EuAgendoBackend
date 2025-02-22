@@ -5,24 +5,22 @@ from core.models import Imagem
 from empresa.models import Empresa
 from funcionario.models import Funcionario
 from servico.models import Servico
+from django.contrib.auth import get_user_model, authenticate
 
 class AgendamentoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Agendamento
         fields = "__all__"
 
-
 class ClienteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cliente
         fields = "__all__"
 
-
 class ImagemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Imagem
         fields = "__all__"
-
 
 class ServicoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -80,7 +78,6 @@ class ServicosFuncionarioSerializer(serializers.ModelSerializer):
         model = Servico
         fields = 'id', 'nome'
 
-
 class FuncionarioSerializer(serializers.ModelSerializer):
 
     foto_url = serializers.SerializerMethodField()
@@ -111,3 +108,25 @@ class EmpresaServicoFuncionarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Empresa
         fields = ['nome', 'cnpj', 'funcionarios']
+
+User = get_user_model()
+
+class RegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["username", "email", "password", "first_name"]
+
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        user = authenticate(username=data["email"], password=data["password"])
+        if user:
+            return {"user": user}
+        raise serializers.ValidationError("Credenciais inválidas.")

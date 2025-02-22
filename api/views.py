@@ -21,6 +21,9 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.utils.dateparse import parse_datetime
 from django.utils.dateparse import parse_date
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import get_user_model
+from .serializers import RegisterSerializer, LoginSerializer
 
 class AgendamentoViewSet(viewsets.ModelViewSet):
     queryset = Agendamento.objects.all()
@@ -84,10 +87,17 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
         empresa_nome = self.request.query_params.get("empresa_nome")
         empresa_cnpj = self.request.query_params.get("empresa_cnpj")
 
+        empresa = None
+
         if empresa_nome:
-            queryset = queryset.filter(empresas__nome__icontains=empresa_nome)
+            empresa = Empresa.objects.filter(nome__icontains=empresa_nome)
         if empresa_cnpj:
-            queryset = queryset.filter(empresas__cnpj__icontains=empresa_cnpj)
+            empresa = Empresa.objects.filter(cnpj__icontains=empresa_cnpj)
+
+        print("Empresas encontradas:", empresa)
+
+        if empresa:
+            queryset = empresa[0].funcionarios.all()
 
         return queryset
 
@@ -245,3 +255,38 @@ class FuncionarioAgendamentoView(APIView):
 
         serializer = AgendamentoSerializer(agendamentos, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+User = get_user_model()
+
+class RegisterView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            refresh = RefreshToken.for_user(user)
+
+            return Response(
+                {
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                    "username": user.username,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LoginView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data["user"]
+            refresh = RefreshToken.for_user(user)
+            return Response(
+                {
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                },
+                status=status.HTTP_200_OK,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
