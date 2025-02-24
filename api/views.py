@@ -27,10 +27,11 @@ from .serializers import RegisterSerializer, LoginSerializer
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from datetime import date
+from datetime import date, timedelta
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.db.models import Sum
 
 User = get_user_model()
 
@@ -356,7 +357,6 @@ class EmpresasUsuarioView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-
         usuario = Token.objects.filter(key=access_token).first().user
 
         if not usuario:
@@ -373,7 +373,6 @@ class EmpresasUsuarioView(APIView):
 class UserView(APIView):
 
     def get(self, request, *args, **kwargs):
-
         access_token = request.query_params.get("usuario_token")
 
         if not access_token:
@@ -382,13 +381,14 @@ class UserView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        usuario = Token.objects.filter(key=access_token).first().user
-
-        if not usuario:
+        token_obj = Token.objects.filter(key=access_token).first()
+        if not token_obj:
             return Response(
                 {"erro": "Token de acesso inválido."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        usuario = token_obj.user
 
         return Response(
             {
@@ -396,6 +396,122 @@ class UserView(APIView):
                 "username": usuario.username,
                 "email": usuario.email,
                 "first_name": usuario.first_name,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request, *args, **kwargs):
+        access_token = request.data.get("usuario_token")
+
+        if not access_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        token_obj = Token.objects.filter(key=access_token).first()
+        if not token_obj:
+            return Response(
+                {"erro": "Token de acesso inválido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        usuario = token_obj.user
+
+        usuario.first_name = request.data.get("first_name", usuario.first_name)
+        usuario.username = request.data.get("username", usuario.username)
+        usuario.email = request.data.get("email", usuario.email)
+        usuario.save()
+
+        return Response(
+            {"mensagem": "Perfil atualizado com sucesso!"},
+            status=status.HTTP_200_OK,
+        )
+
+
+class DashboardView(APIView):
+
+    def get(self, request, *args, **kwargs):
+        empresa_id = request.query_params.get("empresa_id")
+
+        if not empresa_id:
+            return Response(
+                {"erro": "Parâmetro 'empresa_id' é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            empresa = Empresa.objects.get(id=empresa_id)
+        except Empresa.DoesNotExist:
+            return Response(
+                {"erro": "Empresa não encontrada."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        total_funcionarios = Funcionario.objects.filter(empresas=empresa).count()
+        total_clientes = Cliente.objects.count()
+        total_servicos = Servico.objects.count()
+
+        agendamentos_hoje = Agendamento.objects.filter(
+            data=date.today(), funcionario__empresas=empresa
+        ).count()
+
+        agendamentos_pendentes = Agendamento.objects.filter(
+            data__gte=date.today(), funcionario__empresas=empresa
+        ).count()
+
+        dados = {
+            "empresa": empresa.nome,
+            "total_funcionarios": total_funcionarios,
+            "total_clientes": total_clientes,
+            "total_servicos": total_servicos,
+            "agendamentos_hoje": agendamentos_hoje,
+            "agendamentos_pendentes": agendamentos_pendentes,
+        }
+
+        return Response(dados, status=status.HTTP_200_OK)
+
+class FinanceiroView(APIView):
+    def get(self, request, *args, **kwargs):
+        empresa_id = request.query_params.get("empresa_id")
+
+        if not empresa_id:
+            return Response(
+                {"erro": "Parâmetro 'empresa_id' é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        hoje = date.today()
+        primeiro_dia_mes = hoje.replace(day=1)
+        primeiro_dia_semana = hoje - timedelta(days=hoje.weekday())
+
+        total_ganhos = (
+            Agendamento.objects.filter(funcionario__empresas__id=empresa_id)
+            .aggregate(total=Sum("servico__preco"))
+            .get("total", 0)
+        ) or 0
+
+        ganhos_por_semana = (
+            Agendamento.objects.filter(
+                funcionario__empresas__id=empresa_id, data__gte=primeiro_dia_semana
+            )
+            .aggregate(total=Sum("servico__preco"))
+            .get("total", 0)
+        ) or 0
+
+        ganhos_por_mes = (
+            Agendamento.objects.filter(
+                funcionario__empresas__id=empresa_id, data__gte=primeiro_dia_mes
+            )
+            .aggregate(total=Sum("servico__preco"))
+            .get("total", 0)
+        ) or 0
+
+        return Response(
+            {
+                "total_ganhos": total_ganhos,
+                "ganhos_por_semana": ganhos_por_semana,
+                "ganhos_por_mes": ganhos_por_mes,
             },
             status=status.HTTP_200_OK,
         )
