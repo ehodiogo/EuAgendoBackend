@@ -428,7 +428,6 @@ class UserView(APIView):
             status=status.HTTP_200_OK,
         )
 
-
 class DashboardView(APIView):
 
     def get(self, request, *args, **kwargs):
@@ -471,6 +470,7 @@ class DashboardView(APIView):
 
         return Response(dados, status=status.HTTP_200_OK)
 
+
 class FinanceiroView(APIView):
     def get(self, request, *args, **kwargs):
         empresa_id = request.query_params.get("empresa_id")
@@ -485,12 +485,14 @@ class FinanceiroView(APIView):
         primeiro_dia_mes = hoje.replace(day=1)
         primeiro_dia_semana = hoje - timedelta(days=hoje.weekday())
 
+        # Total de ganhos
         total_ganhos = (
             Agendamento.objects.filter(funcionario__empresas__id=empresa_id)
             .aggregate(total=Sum("servico__preco"))
             .get("total", 0)
         ) or 0
 
+        # Ganhos por semana
         ganhos_por_semana = (
             Agendamento.objects.filter(
                 funcionario__empresas__id=empresa_id, data__gte=primeiro_dia_semana
@@ -499,6 +501,7 @@ class FinanceiroView(APIView):
             .get("total", 0)
         ) or 0
 
+        # Ganhos por mês
         ganhos_por_mes = (
             Agendamento.objects.filter(
                 funcionario__empresas__id=empresa_id, data__gte=primeiro_dia_mes
@@ -507,11 +510,44 @@ class FinanceiroView(APIView):
             .get("total", 0)
         ) or 0
 
+        # Funcionário que mais gerou dinheiro
+        funcionario_top = (
+            Agendamento.objects.filter(funcionario__empresas__id=empresa_id)
+            .values("funcionario__nome")
+            .annotate(total=Sum("servico__preco"))
+            .order_by("-total")
+            .first()
+        )
+
+        # Serviço mais rentável
+        servico_mais_rentavel = (
+            Agendamento.objects.filter(funcionario__empresas__id=empresa_id)
+            .values("servico__nome")
+            .annotate(total=Sum("servico__preco"))
+            .order_by("-total")
+            .first()
+        )
+
+        # Serviço que menos gerou dinheiro
+        servico_menos_rentavel = (
+            Agendamento.objects.filter(funcionario__empresas__id=empresa_id)
+            .values("servico__nome")
+            .annotate(total=Sum("servico__preco"))
+            .order_by("total")
+            .first()
+        )
+
         return Response(
             {
                 "total_ganhos": total_ganhos,
                 "ganhos_por_semana": ganhos_por_semana,
                 "ganhos_por_mes": ganhos_por_mes,
+                "funcionario_top": funcionario_top
+                or {"funcionario__nome": None, "total": 0},
+                "servico_mais_rentavel": servico_mais_rentavel
+                or {"servico__nome": None, "total": 0},
+                "servico_menos_rentavel": servico_menos_rentavel
+                or {"servico__nome": None, "total": 0},
             },
             status=status.HTTP_200_OK,
         )
