@@ -4,7 +4,7 @@ class Servico(models.Model):
 
     nome = models.CharField(max_length=100)
     descricao = models.TextField(null=True, blank=True)
-    duracao = models.DurationField()
+    duracao = models.CharField(max_length=100, null=True, blank=True, help_text="Em minutos")
     preco = models.DecimalField(max_digits=5, decimal_places=2)
 
     funcionarios = models.ManyToManyField('funcionario.Funcionario', related_name='servicos')

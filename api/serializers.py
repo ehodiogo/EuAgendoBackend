@@ -8,6 +8,12 @@ from servico.models import Servico
 from django.contrib.auth import get_user_model, authenticate
 
 class AgendamentoSerializer(serializers.ModelSerializer):
+
+    duracao_servico = serializers.SerializerMethodField()
+
+    def get_duracao_servico(self, obj):
+        return obj.servico.duracao
+
     class Meta:
         model = Agendamento
         fields = "__all__"
@@ -77,7 +83,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
 class ServicosFuncionarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Servico
-        fields = 'id', 'nome'
+        fields = 'id', 'nome', 'preco', 'duracao'
 
 class FuncionarioSerializer(serializers.ModelSerializer):
 

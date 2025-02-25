@@ -27,12 +27,13 @@ from .serializers import RegisterSerializer, LoginSerializer
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.db.models import Sum
 from plano.models import PlanoUsuario
+from pagamento.models import Pagamento
 
 User = get_user_model()
 
@@ -147,6 +148,7 @@ class AgendamentoCreateView(APIView):
         cliente_email = request.data.get("cliente_email")  
         cliente_numero = request.data.get("cliente_numero") 
         servico_nome = request.data.get("servico_nome")
+        duracao_minima = request.data.get("duracao_minima")
 
         if (
             not id_funcionario
@@ -182,20 +184,45 @@ class AgendamentoCreateView(APIView):
         )
 
         try:
-            # TODO
-            servico = Servico.objects.get(nome=servico_nome) # arrumar para puxar o serviço pelo funcionário
+            servico = Servico.objects.get(nome=servico_nome, funcionarios=funcionario)
         except Servico.DoesNotExist:
             return Response(
                 {"erro": "Serviço não encontrado."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        agendamento = Agendamento.objects.create(
-            funcionario=funcionario,
-            data=data_hora.date(),
-            hora=data_hora.time(),
-            cliente=cliente,
-            servico=servico,
-        )
+        if int(servico.duracao) > int(duracao_minima):
+
+            quantia_agendamentos = int(servico.duracao) // int(duracao_minima)
+
+            agendamento = Agendamento.objects.create(
+                funcionario=funcionario,
+                data=data_hora.date(),
+                hora=data_hora.time(),
+                cliente=cliente,
+                servico=servico,
+            )
+
+            for i in range(1, quantia_agendamentos):
+                nova_hora = datetime.combine(datetime.today(), data_hora.time()) + timedelta(minutes=int(duracao_minima) * i)
+                nova_hora = nova_hora.time()
+
+                agendamento = Agendamento.objects.create(
+                    funcionario=funcionario,
+                    data=data_hora.date(),
+                    hora=nova_hora,
+                    cliente=cliente,
+                    servico=servico,
+                    is_continuacao=True,
+                )
+        else:
+
+            agendamento = Agendamento.objects.create(
+                funcionario=funcionario,
+                data=data_hora.date(),
+                hora=data_hora.time(),
+                cliente=cliente,
+                servico=servico,
+            )
 
         return Response(
             {
@@ -332,7 +359,7 @@ class AgendamentosHojeView(APIView):
         empresa_id = request.query_params.get("empresa_id")
 
         if empresa_id:
-            agendamentos = Agendamento.objects.filter(data=date.today(), funcionario__empresas__id=empresa_id)
+            agendamentos = Agendamento.objects.filter(data=date.today(), funcionario__empresas__id=empresa_id, is_continuacao=False)
             serializer = AgendamentoSerializer(agendamentos, many=True)
 
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -462,7 +489,6 @@ class ChangePasswordView(APIView):
             status=status.HTTP_200_OK,
         )
 
-
 class DashboardView(APIView):
 
     def get(self, request, *args, **kwargs):
@@ -505,7 +531,6 @@ class DashboardView(APIView):
 
         return Response(dados, status=status.HTTP_200_OK)
 
-
 class FinanceiroView(APIView):
     def get(self, request, *args, **kwargs):
         empresa_id = request.query_params.get("empresa_id")
@@ -522,7 +547,7 @@ class FinanceiroView(APIView):
 
         # Total de ganhos
         total_ganhos = (
-            Agendamento.objects.filter(funcionario__empresas__id=empresa_id)
+            Agendamento.objects.filter(funcionario__empresas__id=empresa_id, is_continuacao=False)
             .aggregate(total=Sum("servico__preco"))
             .get("total", 0)
         ) or 0
@@ -530,7 +555,7 @@ class FinanceiroView(APIView):
         # Ganhos por semana
         ganhos_por_semana = (
             Agendamento.objects.filter(
-                funcionario__empresas__id=empresa_id, data__gte=primeiro_dia_semana
+                funcionario__empresas__id=empresa_id, data__gte=primeiro_dia_semana, is_continuacao=False
             )
             .aggregate(total=Sum("servico__preco"))
             .get("total", 0)
@@ -539,7 +564,7 @@ class FinanceiroView(APIView):
         # Ganhos por mês
         ganhos_por_mes = (
             Agendamento.objects.filter(
-                funcionario__empresas__id=empresa_id, data__gte=primeiro_dia_mes
+                funcionario__empresas__id=empresa_id, data__gte=primeiro_dia_mes, is_continuacao=False
             )
             .aggregate(total=Sum("servico__preco"))
             .get("total", 0)
@@ -547,7 +572,7 @@ class FinanceiroView(APIView):
 
         # Funcionário que mais gerou dinheiro
         funcionario_top = (
-            Agendamento.objects.filter(funcionario__empresas__id=empresa_id)
+            Agendamento.objects.filter(funcionario__empresas__id=empresa_id, is_continuacao=False)
             .values("funcionario__nome")
             .annotate(total=Sum("servico__preco"))
             .order_by("-total")
@@ -556,7 +581,7 @@ class FinanceiroView(APIView):
 
         # Serviço mais rentável
         servico_mais_rentavel = (
-            Agendamento.objects.filter(funcionario__empresas__id=empresa_id)
+            Agendamento.objects.filter(funcionario__empresas__id=empresa_id, is_continuacao=False)
             .values("servico__nome")
             .annotate(total=Sum("servico__preco"))
             .order_by("-total")
@@ -565,7 +590,7 @@ class FinanceiroView(APIView):
 
         # Serviço que menos gerou dinheiro
         servico_menos_rentavel = (
-            Agendamento.objects.filter(funcionario__empresas__id=empresa_id)
+            Agendamento.objects.filter(funcionario__empresas__id=empresa_id, is_continuacao=False)
             .values("servico__nome")
             .annotate(total=Sum("servico__preco"))
             .order_by("total")
