@@ -2,7 +2,7 @@ from .views import AgendamentoViewSet, ClienteViewSet, EmpresaViewSet, Funcionar
 from .views import ImagemViewSet, ServicoViewSet, EmpresaServicoViewSet, AgendamentoCreateView
 from .views import FuncionarioAgendamentoView, LoginView, RegisterView, PasswordRecoveryView
 from .views import AgendamentosHojeView, EmpresasUsuarioView, UserView, DashboardView, FinanceiroView
-from .views import ChangePasswordView
+from .views import ChangePasswordView, LimitePlanoUsageView, PagamentosUsuarioView
 from rest_framework import routers
 from django.urls import path
 
@@ -29,4 +29,6 @@ urlpatterns += [
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
     path('financeiro/', FinanceiroView.as_view(), name='financeiro'),
     path('change-password/', ChangePasswordView.as_view(), name='change_password'),
+    path('limite-plano-usage/', LimitePlanoUsageView.as_view(), name='limite_plano_usage'),
+    path('pagamentos-usuario/', PagamentosUsuarioView.as_view(), name='pagamentos_usuario'),
 ]

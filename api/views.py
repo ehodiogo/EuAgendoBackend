@@ -32,6 +32,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.db.models import Sum
+from plano.models import PlanoUsuario
 
 User = get_user_model()
 
@@ -582,6 +583,102 @@ class FinanceiroView(APIView):
                 or {"servico__nome": None, "total": 0},
                 "servico_menos_rentavel": servico_menos_rentavel
                 or {"servico__nome": None, "total": 0},
+            },
+            status=status.HTTP_200_OK,
+        )
+
+class LimitePlanoUsageView(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        usuario_token = request.query_params.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso inválido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        plano = PlanoUsuario.objects.filter(usuario=usuario).first()
+
+        if not plano:
+
+            return Response(
+                {"erro": "Usuário não possui plano cadastrado."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        empresas = usuario.empresas.all()
+
+        if not empresas:
+            return Response(
+                {"erro": "Usuário não possui empresas cadastradas."},
+                status=status.HTTP_400_BAD_REQUEST, 
+            )
+
+        return Response(
+            {
+                "plano_ativo": plano.plano.nome,
+                "expira_em": plano.expira_em,
+                "quantia_empresas_criadas": empresas.count(),
+                "limite_empresas": plano.plano.quantidade_empresas,
+                "limite_funcionarios": plano.plano.quantidade_funcionarios,
+                "funcionarios_por_empresa": [
+                    {"empresa": empresa.nome, "total_funcionarios": empresa.funcionarios.count()}
+                    for empresa in empresas
+                ]
+            },
+            status=status.HTTP_200_OK,
+        )
+
+class PagamentosUsuarioView(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        usuario_token = request.query_params.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, 
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso inválido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        pagamentos = usuario.pagamento_set.all()
+
+        if not pagamentos:
+            return Response(
+                {"erro": "Usuário não possui pagamentos cadastrados."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        return Response(
+            {
+                "pagamentos": [
+                    {
+                        "valor": pagamento.valor,
+                        "data": pagamento.data,
+                        "status": pagamento.status,
+                        "tipo": pagamento.tipo,
+                        "plano": pagamento.plano.nome,
+                    }
+                    for pagamento in pagamentos
+                ]
             },
             status=status.HTTP_200_OK,
         )

@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Plano(models.Model):
 
@@ -15,3 +16,17 @@ class Plano(models.Model):
     class Meta:
         verbose_name = 'Plano'
         verbose_name_plural = 'Planos'
+
+class PlanoUsuario(models.Model):
+
+    plano = models.ForeignKey(Plano, on_delete=models.CASCADE)
+    adquirido_em = models.DateTimeField(auto_now_add=True)
+    expira_em = models.DateTimeField()
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.plano.nome
+    
+    class Meta:
+        verbose_name = 'Plano do Usuário'
+        verbose_name_plural = 'Planos dos Usuários'
