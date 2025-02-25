@@ -359,7 +359,7 @@ class AgendamentosHojeView(APIView):
         empresa_id = request.query_params.get("empresa_id")
 
         if empresa_id:
-            agendamentos = Agendamento.objects.filter(data=date.today(), funcionario__empresas__id=empresa_id, is_continuacao=False)
+            agendamentos = Agendamento.objects.filter(data=date.today(), funcionario__empresas__id=empresa_id, is_continuacao=False, hora__gte=datetime.now().time()).order_by('hora')
             serializer = AgendamentoSerializer(agendamentos, many=True)
 
             return Response(serializer.data, status=status.HTTP_200_OK)
