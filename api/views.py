@@ -125,20 +125,16 @@ class EmpresaServicoViewSet(viewsets.ModelViewSet):
     queryset = Empresa.objects.all()
     serializer_class = EmpresaServicoFuncionarioSerializer
 
-    @action(detail=False, methods=["get"])
-    def filtrar_por_empresa(self, request):
-        nome = request.query_params.get("nome", None)
-        cnpj = request.query_params.get("cnpj", None)
+    def get_queryset(self):
+        nome = self.request.query_params.get("empresa_nome", None)
+        cnpj = self.request.query_params.get("cnpj", None)
 
         if nome:
-            empresas = Empresa.objects.filter(nome__icontains=nome)
+            return Empresa.objects.filter(nome__icontains=nome)
         elif cnpj:
-            empresas = Empresa.objects.filter(cnpj__icontains=cnpj)
+            return Empresa.objects.filter(cnpj__icontains=cnpj)
         else:
-            return Response({"error": "Informe o nome ou CNPJ da empresa."})
-
-        serializer = self.get_serializer(empresas, many=True)
-        return Response(serializer.data)
+            return Empresa.objects.all()
 
 class AgendamentoCreateView(APIView):
     def post(self, request, *args, **kwargs):
@@ -396,6 +392,7 @@ class UserView(APIView):
                 "username": usuario.username,
                 "email": usuario.email,
                 "first_name": usuario.first_name,
+                "password": usuario.password,
             },
             status=status.HTTP_200_OK,
         )
@@ -427,6 +424,43 @@ class UserView(APIView):
             {"mensagem": "Perfil atualizado com sucesso!"},
             status=status.HTTP_200_OK,
         )
+
+class ChangePasswordView(APIView):
+    def post(self, request, *args, **kwargs):
+        usuario_token = request.data.get("usuario_token")
+        current_password = request.data.get("current_password")
+        new_password = request.data.get("new_password")
+
+        if not usuario_token or not current_password or not new_password:
+            return Response(
+                {"erro": "Token de acesso e senha são obrigatórios."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        token_obj = Token.objects.filter(key=usuario_token).first()
+        if not token_obj:
+            return Response(
+                {"erro": "Token de acesso inválido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = token_obj.user
+
+        if not user.password == current_password:
+
+            return Response(
+                {"erro": "Senha atual incorreta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response(
+            {"mensagem": "Senha alterada com sucesso!"},
+            status=status.HTTP_200_OK,
+        )
+
 
 class DashboardView(APIView):
 
