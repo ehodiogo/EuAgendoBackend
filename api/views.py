@@ -513,11 +513,11 @@ class DashboardView(APIView):
         total_servicos = Servico.objects.count()
 
         agendamentos_hoje = Agendamento.objects.filter(
-            data=date.today(), funcionario__empresas=empresa
+            data=date.today(), funcionario__empresas=empresa, is_continuacao=False
         ).count()
 
         agendamentos_pendentes = Agendamento.objects.filter(
-            data__gte=date.today(), funcionario__empresas=empresa
+            data__gte=date.today(), funcionario__empresas=empresa, is_continuacao=False
         ).count()
 
         dados = {
