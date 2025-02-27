@@ -50,8 +50,14 @@ class EmpresaSerializer(serializers.ModelSerializer):
         assinatura = PlanoUsuario.objects.filter(usuario=user).first()
 
         if assinatura:
+            minutos_restantes = (assinatura.expira_em - timezone.now()).total_seconds() / 60
+            horas_restantes = minutos_restantes / 60
 
-            return assinatura.expira_em > timezone.now()
+            if horas_restantes < 0:
+
+                return False
+            
+            return True
 
         return False
 
@@ -63,7 +69,10 @@ class EmpresaSerializer(serializers.ModelSerializer):
 
         if assinatura:
 
-            return assinatura.expira_em
+            minutos_restantes = (assinatura.expira_em - timezone.now()).total_seconds() / 60
+            horas_restantes = minutos_restantes / 60
+
+            return horas_restantes
 
         return None
 
