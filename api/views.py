@@ -35,6 +35,7 @@ from plano.models import PlanoUsuario, Plano
 from pagamento.models import Pagamento
 from decouple import config
 import mercadopago
+import pytz
 
 User = get_user_model()
 
@@ -318,10 +319,20 @@ class LoginView(APIView):
 
             token, _ = Token.objects.get_or_create(user=user)
 
+            plan = PlanoUsuario.objects.filter(usuario=user).first()
+
+            now_aware = datetime.now(pytz.utc)
+            is_expired = False
+            if plan.plano.nome != "Free Trial":
+                if plan.expira_em.astimezone(pytz.utc) < now_aware:
+                    is_expired = True
+                    
             return Response(
                 {
                     "refresh": str(refresh),
                     "access": str(token.key),
+                    "is_expired_plan": is_expired,
+                    "tempo_restante": plan.expira_em.astimezone(pytz.utc) - now_aware,
                 },
                 status=status.HTTP_200_OK,
             )
@@ -794,7 +805,6 @@ class PagamentoPlanoView(APIView):
                 {"erro": "Plano não encontrado."},
                 status=status.HTTP_404_NOT_FOUND,
             )
-
 
 class PaymentSuccessView(APIView):
     def post(self, request, *args, **kwargs):
