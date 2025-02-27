@@ -6,7 +6,8 @@ from empresa.models import Empresa
 from funcionario.models import Funcionario
 from servico.models import Servico
 from django.contrib.auth import get_user_model, authenticate
-from plano.models import Plano
+from plano.models import Plano, PlanoUsuario
+from django.utils import timezone
 
 class AgendamentoSerializer(serializers.ModelSerializer):
 
@@ -38,6 +39,33 @@ class EmpresaSerializer(serializers.ModelSerializer):
     logo = serializers.SerializerMethodField()
     servicos = serializers.SerializerMethodField()
     funcionarios = serializers.SerializerMethodField()
+    assinatura_ativa = serializers.SerializerMethodField()
+    assinatura_vencimento = serializers.SerializerMethodField()
+
+    # TODO: lógica de pegar assinatura da empresa
+    def get_assinatura_ativa(self, obj):
+
+        user = obj.users.first()
+
+        assinatura = PlanoUsuario.objects.filter(usuario=user).first()
+
+        if assinatura:
+
+            return assinatura.expira_em > timezone.now()
+
+        return False
+
+    def get_assinatura_vencimento(self, obj):
+
+        user = obj.users.first()
+
+        assinatura = PlanoUsuario.objects.filter(usuario=user).first()
+
+        if assinatura:
+
+            return assinatura.expira_em
+
+        return None
 
     def get_logo(self, obj):
         return obj.logo.imagem.url
@@ -79,6 +107,8 @@ class EmpresaSerializer(serializers.ModelSerializer):
             "horario_pausa_inicio",
             "horario_pausa_fim",
             "funcionarios",
+            "assinatura_ativa",
+            "assinatura_vencimento",
         )
 
 class ServicosFuncionarioSerializer(serializers.ModelSerializer):
