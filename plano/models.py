@@ -23,6 +23,7 @@ class PlanoUsuario(models.Model):
     adquirido_em = models.DateTimeField(auto_now_add=True)
     expira_em = models.DateTimeField()
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    changed_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.plano.nome

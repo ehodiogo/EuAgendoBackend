@@ -6,6 +6,7 @@ from empresa.models import Empresa
 from funcionario.models import Funcionario
 from servico.models import Servico
 from django.contrib.auth import get_user_model, authenticate
+from plano.models import Plano
 
 class AgendamentoSerializer(serializers.ModelSerializer):
 
@@ -137,3 +138,9 @@ class LoginSerializer(serializers.Serializer):
         if user:
             return {"user": user}
         raise serializers.ValidationError("Credenciais inválidas.")
+
+class PlanSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Plano
+        fields = ["valor", "nome"]

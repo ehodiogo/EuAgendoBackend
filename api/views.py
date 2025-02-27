@@ -28,12 +28,13 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from datetime import date, timedelta, datetime
+import hashlib
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.db.models import Sum
-from plano.models import PlanoUsuario
+from plano.models import PlanoUsuario, Plano
 from pagamento.models import Pagamento
+from decouple import config
+import mercadopago
 
 User = get_user_model()
 
@@ -286,6 +287,16 @@ class RegisterView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
+
+            
+            user_plan = PlanoUsuario.objects.filter(usuario=user).first()
+
+            if not user_plan:
+                PlanoUsuario.objects.create(
+                    usuario=user, plano=Plano.objects.get(title="Free Trial"), expira_em=datetime.now() + timedelta(days=7)
+                )
+
+                user_plan = PlanoUsuario.objects.filter(usuario=user)
 
             return Response(
                 {
@@ -707,3 +718,176 @@ class PagamentosUsuarioView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+class PagamentoPlanoView(APIView):
+    def post(self, request, *args, **kwargs):
+
+        plano_nome = request.data.get("plano_nome")
+        usuario_token = request.data.get("usuario_token")
+
+        if not plano_nome or not usuario_token:
+            return Response(
+                {"erro": "Plano e token de acesso é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+
+            if config("DEBUG", default=False, cast=bool):
+                sdk = mercadopago.SDK(config("MERCADO_PAGO_ACCESS_TOKEN_TEST"))
+                print("MERCADO_PAGO_ACCESS_TOKEN_TEST", config("MERCADO_PAGO_ACCESS_TOKEN_TEST"))
+            else:
+                sdk = mercadopago.SDK(config("MERCADO_PAGO_ACCESS_TOKEN_PRD"))
+
+            plan = Plano.objects.get(nome=plano_nome)
+
+            user = Token.objects.filter(key=usuario_token).first().user
+
+            external_reference = hashlib.sha256(f"{user.id}-{plan.id}-{plan.nome}-{user.email}-{datetime.now()}".encode()).hexdigest()
+
+            from pagamento.models import StatusPagamento
+
+            Pagamento.objects.create(
+                plano=plan,
+                valor=float(plan.valor),
+                status=StatusPagamento.PENDENTE,
+                data=datetime.now(),
+                tipo="",
+                hash_mercadopago=external_reference,
+                updated_at=datetime.now(),
+                usuario=user,
+            )
+
+            payment_data = {
+                "items": [
+                    {
+                        "id": plan.id,
+                        "title": f"Contratação do {plan.nome}",  
+                        "quantity": 1,
+                        "unit_price": float(plan.valor),
+                        "currency_id": "BRL",
+                        "description": f"Você está adquirindo o {plan.nome}! ",
+                    }
+                ],
+                "back_urls": {
+                    # TODO: Alterar para URL do frontend
+                    "success": 'http://localhost:5173/payment/success/',
+                    "failure": 'http://localhost:5173/payment/failure/',
+                    "pending": 'http://localhost:5173/payment/pending/',
+                },
+                "payer": {
+                    "email": user.email,
+                },
+                "external_reference": external_reference,
+            }
+
+            result = sdk.preference().create(payment_data)
+
+            print("Result: ", result)
+
+            url = result["response"]['init_point'] 
+
+            return Response({"url": url}, status=status.HTTP_200_OK)
+
+        except Plano.DoesNotExist:
+            return Response(
+                {"erro": "Plano não encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+class PaymentSuccessView(APIView):
+    def post(self, request, *args, **kwargs):
+
+        plano_nome = request.data.get("plano_nome")
+        usuario_token = request.data.get("usuario_token")
+
+        print("Plano: ", plano_nome)
+        print("Token: ", usuario_token)
+
+        if not plano_nome or not usuario_token:
+            return Response(
+                {"erro": "Plano e token de acesso é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+
+            user = Token.objects.filter(key=usuario_token).first().user
+
+            transaction = Pagamento.objects.filter(plano__nome=plano_nome, verified=False, usuario=user, status="Pendente").last()
+
+            hash_id = transaction.hash_mercadopago
+
+            if config("DEBUG", default=False, cast=bool):
+                sdk = mercadopago.SDK(config("MERCADO_PAGO_ACCESS_TOKEN_TEST"))
+            else:
+                sdk = mercadopago.SDK(config("MERCADO_PAGO_ACCESS_TOKEN_PRD"))
+
+            payment = sdk.payment().search({"external_reference": hash_id})
+            print("Payment: ", payment)
+
+            if payment["response"]["results"][0]["status"] == "approved":
+                transaction.status = "approved"
+
+                payment_method = payment["response"]["results"][0]["payment_method_id"]
+
+                from pagamento.models import TipoPagamento
+                if payment_method == "credit_card":
+                    transaction.payment_method = TipoPagamento.CARTAO_CREDITO
+                elif payment_method == "debit_card":
+                    transaction.payment_method = TipoPagamento.CARTAO_DEBITO
+                else:
+                    transaction.payment_method = TipoPagamento.PIX
+
+                from pagamento.models import StatusPagamento
+
+                transaction.updated_at = datetime.now()
+                transaction.is_verified = True
+                transaction.status = StatusPagamento.PAGO
+                transaction.save()
+
+                user_plan = PlanoUsuario.objects.filter(usuario=user).first()
+
+                if not user_plan:
+                    PlanoUsuario.objects.create(
+                        usuario=user, plano=Plano.objects.get(title="Free"), expira_em=datetime.now() + timedelta(days=30)
+                    )
+
+                    user_plan = PlanoUsuario.objects.filter(usuario=user)
+
+                else:
+                    user_plan = user_plan
+
+                user_plan.plan = transaction.plano
+                user_plan.active = True
+                user_plan.changed_at = datetime.now()
+                user_plan.expira_em = datetime.now() + timedelta(
+                    days=30
+                )
+                user_plan.save()
+
+                print("User plan: ", user_plan)
+
+                return Response(
+                    {"message": "Payment approved. You are now subscribed"},
+                    status=status.HTTP_200_OK,
+                )
+            elif payment["response"]["results"][0]["status"] == "rejected":
+                return Response(
+                    {"message": "Payment rejected"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                print(payment["response"]["results"][0]["status"])
+                print("Not approved")
+                return Response(
+                    {"message": "Payment not approved"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        except Pagamento.DoesNotExist:
+            return Response(
+                {"erro": "Pagamento não encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
