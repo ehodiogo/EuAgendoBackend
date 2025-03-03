@@ -3,7 +3,10 @@ from .views import ImagemViewSet, ServicoViewSet, EmpresaServicoViewSet, Agendam
 from .views import FuncionarioAgendamentoView, LoginView, RegisterView, PasswordRecoveryView
 from .views import AgendamentosHojeView, EmpresasUsuarioView, UserView, DashboardView, FinanceiroView
 from .views import ChangePasswordView, LimitePlanoUsageView, PagamentosUsuarioView, PagamentoPlanoView
-from .views import PaymentSuccessView
+from .views import PaymentSuccessView, EmpresaCreate, FuncionarioCreate, ServicoCreate
+from .views import AdicionarFuncionariosEmpresa, FuncionariosCriadosView, AdicionarServicosFuncionario
+from .views import ServicosCriadosUsuarioEmpresaView, AdicionarServicoFuncionariosView
+from .views import RemoverServicoEmpresaView, RemoverServicosFuncionarioView, EditarServicoView
 from rest_framework import routers
 from django.urls import path
 
@@ -34,4 +37,15 @@ urlpatterns += [
     path('pagamentos-usuario/', PagamentosUsuarioView.as_view(), name='pagamentos_usuario'),
     path('pagamento-plano/', PagamentoPlanoView.as_view(), name='pagamento_plano'),
     path('payment-success/', PaymentSuccessView.as_view(), name='payment_success'),
+    path('empresa-create/', EmpresaCreate.as_view(), name='empresa_create'),
+    path('funcionario-create/', FuncionarioCreate.as_view(), name='funcionario_create'),
+    path('servico-create/', ServicoCreate.as_view(), name='servico_create'),
+    path('adicionar-funcionarios-empresa/', AdicionarFuncionariosEmpresa.as_view(), name='adicionar_funcionarios_empresa'),
+    path('funcionarios-criados/', FuncionariosCriadosView.as_view(), name='funcionarios_criados'),
+    path('adicionar-servicos-funcionario/', AdicionarServicosFuncionario.as_view(), name='adicionar_servicos_funcionario'),
+    path('servicos-criados-usuario-empresa/', ServicosCriadosUsuarioEmpresaView.as_view(), name='servicos_criados_usuario_empresa'),
+    path('adicionar-servico-funcionarios/', AdicionarServicoFuncionariosView.as_view(), name='adicionar_servico_funcionarios'),
+    path('remover-servico-empresa/', RemoverServicoEmpresaView.as_view(), name='remover_servico_empresa'),
+    path('remover-servicos-funcionario/', RemoverServicosFuncionarioView.as_view(), name='remover_servicos_funcionario'),
+    path('editar-servico/', EditarServicoView.as_view(), name='editar_servico'),
 ]

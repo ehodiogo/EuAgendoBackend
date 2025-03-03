@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
+from django.contrib.auth.models import User
 
 class Empresa(models.Model):
 
@@ -29,6 +30,8 @@ class Empresa(models.Model):
     abre_domingo = models.BooleanField()
 
     funcionarios = models.ManyToManyField('funcionario.Funcionario', related_name='empresas')
+
+    criado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='empresas_criadas')
 
     def __str__(self):
         return self.nome

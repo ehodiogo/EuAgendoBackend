@@ -42,7 +42,6 @@ class EmpresaSerializer(serializers.ModelSerializer):
     assinatura_ativa = serializers.SerializerMethodField()
     assinatura_vencimento = serializers.SerializerMethodField()
 
-    # TODO: lógica de pegar assinatura da empresa
     def get_assinatura_ativa(self, obj):
 
         user = obj.users.first()
@@ -77,7 +76,9 @@ class EmpresaSerializer(serializers.ModelSerializer):
         return None
 
     def get_logo(self, obj):
-        return obj.logo.imagem.url
+        if obj.logo:
+            return obj.logo.imagem.url
+        return None
 
     def get_servicos(self, obj):
         return [

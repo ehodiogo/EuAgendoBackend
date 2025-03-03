@@ -6,6 +6,7 @@ from .serializers import (
     ImagemSerializer,
     ServicoSerializer,
     EmpresaServicoFuncionarioSerializer,
+    ServicoFuncionarioSerializer
 )
 from agendamento.models import Agendamento
 from cliente.models import Cliente
@@ -36,6 +37,8 @@ from pagamento.models import Pagamento
 from decouple import config
 import mercadopago
 import pytz
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.core.files.base import ContentFile
 
 User = get_user_model()
 
@@ -293,8 +296,11 @@ class RegisterView(APIView):
             user_plan = PlanoUsuario.objects.filter(usuario=user).first()
 
             if not user_plan:
+
+                plano, _ = Plano.objects.get_or_create(nome="Free Trial", valor=0, quantidade_empresas=1, quantidade_funcionarios=1, duracao_em_dias=7)
+
                 PlanoUsuario.objects.create(
-                    usuario=user, plano=Plano.objects.get(title="Free Trial"), expira_em=datetime.now() + timedelta(days=7)
+                    usuario=user, plano=plano, expira_em=datetime.now() + timedelta(days=7)
                 )
 
                 user_plan = PlanoUsuario.objects.filter(usuario=user)
@@ -412,6 +418,7 @@ class EmpresasUsuarioView(APIView):
             )
 
         empresas = usuario.empresas.all()
+        print("Empresas", empresas)
         serializer = EmpresaSerializer(empresas, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -746,7 +753,6 @@ class PagamentoPlanoView(APIView):
 
             if config("DEBUG", default=False, cast=bool):
                 sdk = mercadopago.SDK(config("MERCADO_PAGO_ACCESS_TOKEN_TEST"))
-                print("MERCADO_PAGO_ACCESS_TOKEN_TEST", config("MERCADO_PAGO_ACCESS_TOKEN_TEST"))
             else:
                 sdk = mercadopago.SDK(config("MERCADO_PAGO_ACCESS_TOKEN_PRD"))
 
@@ -794,8 +800,6 @@ class PagamentoPlanoView(APIView):
 
             result = sdk.preference().create(payment_data)
 
-            print("Result: ", result)
-
             url = result["response"]['init_point'] 
 
             return Response({"url": url}, status=status.HTTP_200_OK)
@@ -811,9 +815,6 @@ class PaymentSuccessView(APIView):
 
         plano_nome = request.data.get("plano_nome")
         usuario_token = request.data.get("usuario_token")
-
-        print("Plano: ", plano_nome)
-        print("Token: ", usuario_token)
 
         if not usuario_token:
             return Response(
@@ -837,7 +838,6 @@ class PaymentSuccessView(APIView):
                     sdk = mercadopago.SDK(config("MERCADO_PAGO_ACCESS_TOKEN_PRD"))
 
                 payment = sdk.payment().search({"external_reference": hash_id})
-                print("Payment: ", payment)
 
                 if payment["response"]["results"][0]["status"] == "approved":
                     transaction.status = "approved"
@@ -879,8 +879,6 @@ class PaymentSuccessView(APIView):
                     )
                     user_plan.save()
 
-                    print("User plan: ", user_plan)
-
                     return Response(
                         {"message": "Payment approved. You are now subscribed"},
                         status=status.HTTP_200_OK,
@@ -891,8 +889,6 @@ class PaymentSuccessView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 else:
-                    print(payment["response"]["results"][0]["status"])
-                    print("Not approved")
                     return Response(
                         {"message": "Payment not approved"},
                         status=status.HTTP_400_BAD_REQUEST,
@@ -921,7 +917,6 @@ class PaymentSuccessView(APIView):
                         sdk = mercadopago.SDK(config("MERCADO_PAGO_ACCESS_TOKEN_PRD"))
 
                     payment = sdk.payment().search({"external_reference": hash_id})
-                    print("Payment: ", payment)
 
                     if payment["response"]["results"][0]["status"] == "approved":
 
@@ -960,8 +955,6 @@ class PaymentSuccessView(APIView):
                         )
                         user_plan.save()
 
-                        print("User plan: ", user_plan)
-
                         return Response(
                             {"message": "Payment approved. You are now subscribed"},
                             status=status.HTTP_200_OK,
@@ -972,3 +965,654 @@ class PaymentSuccessView(APIView):
                     {"erro": "Pagamento não encontrado."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
+
+class EmpresaCreate(APIView):
+
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request):
+
+        nome = request.data.get("nome")
+        cnpj = request.data.get("cnpj")
+        endereco = request.data.get("endereco")
+        telefone = request.data.get("telefone")
+        email = request.data.get("email")
+
+        horario_abertura_dia_semana = request.data.get("horario_abertura_dia_semana")
+        horario_fechamento_dia_semana = request.data.get("horario_fechamento_dia_semana")
+
+        horario_abertura_fim_semana = request.data.get("horario_abertura_fim_semana")
+        horario_fechamento_fim_semana = request.data.get("horario_fechamento_fim_semana")
+
+        para_almoco = request.data.get("para_almoco")
+
+        if para_almoco == "true":
+            para_almoco = True
+        else:
+            para_almoco = False
+
+        inicio_almoco = request.data.get("inicio_almoco")
+        fim_almoco = request.data.get("fim_almoco")
+
+        abre_sabado = request.data.get("abre_sabado")
+
+        if abre_sabado == "true":
+            abre_sabado = True
+        else:
+            abre_sabado = False
+
+        abre_domingo = request.data.get("abre_domingo")
+
+        if abre_domingo == "true":
+            abre_domingo = True
+        else:
+            abre_domingo = False
+
+        logo = request.data.get("logo")
+
+        if not nome or not cnpj or not endereco or not telefone or not email:
+
+            return Response(
+                {"erro": "Todos os campos são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST 
+            )
+
+        try:
+
+            imagem_obj = None
+            if isinstance(logo, ContentFile) or hasattr(logo, 'read'):
+                imagem_obj = Imagem.objects.create(imagem=logo)
+            elif isinstance(logo, str) and logo.startswith("http"):  # Se for uma URL
+                imagem_obj = Imagem.objects.create(imagem_url=logo)
+
+            empresa = Empresa.objects.create(
+                nome=nome,
+                cnpj=cnpj,
+                endereco=endereco,
+                telefone=telefone,
+                email=email,
+                horario_abertura_dia_semana=horario_abertura_dia_semana,
+                horario_fechamento_dia_semana=horario_fechamento_dia_semana,
+                horario_abertura_fim_de_semana=horario_abertura_fim_semana,
+                horario_fechamento_fim_de_semana=horario_fechamento_fim_semana,
+                para_almoço=para_almoco,
+                horario_pausa_inicio=inicio_almoco,
+                horario_pausa_fim=fim_almoco,
+                abre_sabado=abre_sabado,
+                abre_domingo=abre_domingo,
+                logo=imagem_obj,  
+                criado_por=usuario
+            )
+
+            usuario.empresas.add(empresa)
+            usuario.save()
+
+            return Response(
+                {
+                    "message": "Empresa criada com sucesso.",
+                    "empresa": EmpresaSerializer(empresa).data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class FuncionarioCreate(APIView):
+
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request):
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST 
+            )
+
+        nome = request.data.get("nome")
+        foto = request.data.get("foto")
+
+        if not nome:
+
+            return Response(
+                {"erro": "Nome é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        empresa_nome = request.data.get("empresa_nome")
+
+        try:    
+
+            if isinstance(foto, ContentFile) or hasattr(foto, 'read'):
+                imagem_obj = Imagem.objects.create(imagem=foto)
+            elif isinstance(foto, str) and foto.startswith("http"): 
+                imagem_obj = Imagem.objects.create(imagem_url=foto)
+
+            funcionario = Funcionario.objects.create(
+                nome=nome,
+                foto=imagem_obj,
+                criado_por=usuario
+            )
+
+            if empresa_nome:
+                empresa = Empresa.objects.get(nome=empresa_nome)
+                funcionario.empresas.add(empresa)
+                funcionario.save()
+            
+            return Response(
+                {
+                    "message": "Funcionário criado com sucesso.",
+                    "funcionario": FuncionarioSerializer(funcionario).data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class ServicoCreate(APIView):
+
+    def post(self, request):
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST 
+            )
+        
+        nome = request.data.get("nome")
+        preco = request.data.get("preco")
+        duracao = request.data.get("duracao")
+
+        if not nome or not preco or not duracao:
+
+            return Response(
+                {"erro": "Todos os campos são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+
+            servico = Servico.objects.create(
+                nome=nome,
+                preco=preco,
+                duracao=duracao,
+                criado_por=usuario,
+            )
+
+            return Response(
+                {
+                    "message": "Serviço criado com sucesso.",
+                    "servico": ServicoSerializer(servico).data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class AdicionarFuncionariosEmpresa(APIView):
+
+    def post(self, request):
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST 
+            )
+        
+        empresa_nome = request.data.get("empresa_nome")
+
+        if not empresa_nome:
+
+            return Response(
+                {"erro": "Nome da empresa é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        funcionarios = request.data.get("funcionarios")
+
+        if not funcionarios:
+
+            return Response(
+                {"erro": "Funcionários são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+
+            empresa = Empresa.objects.get(nome=empresa_nome)
+
+            for funcionario in funcionarios:
+                funcionario_obj = Funcionario.objects.get(id=funcionario)
+                funcionario_obj.empresas.add(empresa)
+                funcionario_obj.save()
+
+            return Response(
+                {
+                    "message": "Funcionários adicionados com sucesso.",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class FuncionariosCriadosView(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        usuario_token = request.query_params.get("usuario_token")
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        usuario = Token.objects.filter(key=usuario_token).first().user
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST 
+            )
+
+        funcionarios = Funcionario.objects.filter(criado_por=usuario)
+
+        if not funcionarios:
+            return Response(
+                {"erro": "Usuário não possui funcionários cadastrados."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        empresa_id = request.query_params.get("empresa_id")
+
+        if empresa_id:
+            funcionarios = funcionarios.filter(empresas__id=empresa_id)
+
+        return Response(
+            {
+                "funcionarios": ServicoFuncionarioSerializer(
+                    funcionarios, many=True
+                ).data
+            },
+            status=status.HTTP_200_OK,
+        )
+
+class AdicionarServicosFuncionario(APIView):
+
+    def post(self, request):
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:   
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST 
+            )
+        
+        funcionarios = request.data.get("funcionarios")
+        
+        servico_nome = request.data.get("servico_nome")
+        servico_duracao = request.data.get("servico_duracao")
+        servico_valor = request.data.get("servico_valor")
+        servico_descricao = request.data.get("servico_descricao")
+
+        if not servico_nome or not servico_duracao or not servico_valor:
+
+            return Response(
+                {"erro": "Todos os campos são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        empresa_id = request.data.get("empresa_id")
+
+        if not empresa_id:
+
+            return Response(
+                {"erro": "ID da empresa é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+
+            servico = Servico.objects.create(
+                nome=servico_nome,
+                duracao=servico_duracao,
+                preco=servico_valor,
+                descricao=servico_descricao,
+                criado_por=usuario
+            )
+
+            if funcionarios:
+
+                for funcionario in funcionarios:
+                    funcionario_obj = Funcionario.objects.get(id=funcionario)
+                    funcionario_obj.servicos.add(servico)
+                    funcionario_obj.save()
+
+            empresa = Empresa.objects.get(id=empresa_id)
+            empresa.servicos.add(servico)
+            empresa.save()
+
+            return Response(
+                {
+                    "message": "Serviços adicionados com sucesso.",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class ServicosCriadosUsuarioEmpresaView(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        usuario_token = request.query_params.get("usuario_token")
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST 
+            )
+        
+        empresa_id = request.query_params.get("empresa_id")
+
+        if not empresa_id:
+
+            return Response(
+                {"erro": "ID da empresa é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+
+            empresa = Empresa.objects.get(id=empresa_id)
+            servicos = empresa.servicos.all()
+
+            return Response(
+                {
+                    "servicos": ServicoSerializer(
+                        servicos, many=True
+                    ).data
+                },
+                status=status.HTTP_200_OK,
+            )
+        
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class AdicionarServicoFuncionariosView(APIView):
+
+    def post(self, request):
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:   
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST 
+            )
+        
+        servico_id = request.data.get("servico_id")
+
+        if not servico_id:
+
+            return Response(
+                {"erro": "ID do serviço é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        funcionarios = request.data.get("funcionarios")
+
+        if not funcionarios:
+
+            return Response(
+                {"erro": "Funcionários são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+
+            servico = Servico.objects.get(id=servico_id)
+
+            for funcionario in funcionarios:
+                funcionario_obj = Funcionario.objects.get(id=funcionario)
+                funcionario_obj.servicos.add(servico)
+
+            return Response(
+                {
+                    "message": "Serviços adicionados com sucesso.",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+    
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class RemoverServicoEmpresaView(APIView):
+
+    def post(self, request):
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:   
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST 
+            )
+
+        servico_id = request.data.get("servico_id")
+
+        if not servico_id:
+
+            return Response(
+                {"erro": "ID do serviço é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        empresa_id = request.data.get("empresa_id")
+
+        if not empresa_id:
+
+            return Response(
+                {"erro": "ID da empresa é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+
+            empresa = Empresa.objects.get(id=empresa_id)
+            servico = Servico.objects.get(id=servico_id)
+            empresa.servicos.remove(servico)
+
+            for funcionario in empresa.funcionarios.all():
+                funcionario.servicos.remove(servico)
+                funcionario.save()
+
+            servico.delete()
+
+            return Response(
+                {
+                    "message": "Serviço removido com sucesso.",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class RemoverServicosFuncionarioView(APIView):
+
+    def post(self, request):
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        servico_id = request.data.get("servico_id")
+
+        if not servico_id:
+
+            return Response(
+                {"erro": "ID do serviço é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        funcionarios = request.data.get("funcionarios")
+
+        if not funcionarios:
+
+            return Response(
+                {"erro": "Funcionários são obrigatórios."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+
+            servico = Servico.objects.get(id=servico_id)
+
+            for funcionario in funcionarios:
+                funcionario_obj = Funcionario.objects.get(id=funcionario)
+                funcionario_obj.servicos.remove(servico)
+
+            return Response(
+                {
+                    "message": "Serviços adicionados com sucesso.",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class EditarServicoView(APIView):
+
+    def post(self, request):
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        servico_id = request.data.get("servico_id")
+
+        if not servico_id:
+            return Response(
+                {"erro": "ID do serviço é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        servico_nome = request.data.get("servico_nome")
+        servico_duracao = request.data.get("servico_duracao")
+        servico_valor = request.data.get("servico_valor")
+        servico_descricao = request.data.get("servico_descricao")
+
+        try:
+
+            servico = Servico.objects.get(id=servico_id)
+
+            if servico_nome:
+                servico.nome = servico_nome
+
+            if servico_duracao:
+                servico.duracao = servico_duracao
+
+            if servico_valor:
+                servico.preco = servico_valor
+
+            if servico_descricao:
+                servico.descricao = servico_descricao
+
+            servico.save()
+
+            return Response(
+                {
+                    "message": "Serviço atualizado com sucesso.",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
