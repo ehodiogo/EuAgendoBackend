@@ -30,8 +30,8 @@ RAILWAY_DEPLOYED = os.getenv("RAILWAY_DEPLOYED", "False") == "True"
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "spotthemapbackend-production.up.railway.app",
-    "spotthemapfrontend-production.up.railway.app",
+    "backend-production-7438.up.railway.app"
+    "frontend-production-8641.up.railway.app",
     "spotthemap.tech",
 ]
 
@@ -42,8 +42,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
-    "https://spotthemapbackend-production.up.railway.app",
-    "https://spotthemapfrontend-production.up.railway.app",
+    "https://backend-production-7438.up.railway.app",
+    "https://frontend-production-8641.up.railway.app/",
     "https://spotthemap.tech",
     "http://spotthemap.tech",
 ]
@@ -55,8 +55,8 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
-    "https://spotthemapbackend-production.up.railway.app",
-    "https://spotthemapfrontend-production.up.railway.app",
+    "https://backend-production-7438.up.railway.app",
+    "https://frontend-production-8641.up.railway.app",
     "https://spotthemap.tech",
     "http://spotthemap.tech",
 ]
@@ -68,8 +68,8 @@ CORS_ORIGIN_WHITELIST = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
-    "https://spotthemapbackend-production.up.railway.app",
-    "https://spotthemapfrontend-production.up.railway.app",
+    "https://backend-production-7438.up.railway.app",
+    "https://frontend-production-8641.up.railway.app",
     "https://spotthemap.tech",
     "http://spotthemap.tech",
 ]
