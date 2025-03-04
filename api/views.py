@@ -1616,3 +1616,95 @@ class EditarServicoView(APIView):
         except Exception as e:
             print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class EditarEmpresaView(APIView):
+
+    def post(self, request):
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        empresa_id = request.data.get("empresa_id")
+
+        if not empresa_id:
+            return Response(
+                {"erro": "ID da empresa é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        nome = request.data.get("nome")
+        cnpj = request.data.get("cnpj")
+        # outros campos + save + return
+        # TODO
+
+class PossuiLimiteView(APIView):
+
+    def post(self, request):
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        acao_realizada = request.data.get("acao_realizada")
+
+        if not acao_realizada:
+            return Response(
+                {"erro": "Ação realizada é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        possui_limite = False
+
+        plano_usuario = PlanoUsuario.objects.filter(usuario=usuario).first()
+
+        if plano_usuario:
+
+            plano_usuario = plano_usuario.plano
+        
+        if acao_realizada == "criar_empresa":
+
+            if usuario.empresas.count() >= plano_usuario.quantidade_empresas:
+                possui_limite = False
+            else:
+                possui_limite = True
+
+        if acao_realizada == "criar_funcionario":
+
+            quantia_funcionarios = Funcionario.objects.filter(criado_por=usuario).count()
+
+            if quantia_funcionarios >= plano_usuario.quantidade_funcionarios:
+                possui_limite = False
+            else:
+                possui_limite = True
+
+        return Response(
+            {
+                "possui_limite": possui_limite,
+            },
+            status=status.HTTP_201_CREATED,
+        )
