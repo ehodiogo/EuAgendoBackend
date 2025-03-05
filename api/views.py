@@ -1850,6 +1850,10 @@ class PossuiLimiteView(APIView):
             else:
                 possui_limite = True
 
+            print("quantia_funcionarios", quantia_funcionarios)
+            print("plano_usuario.quantidade_funcionarios", plano_usuario.quantidade_funcionarios)
+            print("possui_limite", possui_limite)
+
         return Response(
             {
                 "possui_limite": possui_limite,

@@ -7,7 +7,7 @@ from .views import PaymentSuccessView, EmpresaCreate, FuncionarioCreate, Servico
 from .views import AdicionarFuncionariosEmpresa, FuncionariosCriadosView, AdicionarServicosFuncionario
 from .views import ServicosCriadosUsuarioEmpresaView, AdicionarServicoFuncionariosView
 from .views import RemoverServicoEmpresaView, RemoverServicosFuncionarioView, EditarServicoView
-from .views import LimitePlanoUsageView, EditarEmpresaView, RemoverEmpresaView
+from .views import PossuiLimiteView, EditarEmpresaView, RemoverEmpresaView
 from rest_framework import routers
 from django.urls import path
 
@@ -49,7 +49,7 @@ urlpatterns += [
     path('remover-servico-empresa/', RemoverServicoEmpresaView.as_view(), name='remover_servico_empresa'),
     path('remover-servicos-funcionario/', RemoverServicosFuncionarioView.as_view(), name='remover_servicos_funcionario'),
     path('editar-servico/', EditarServicoView.as_view(), name='editar_servico'),
-    path('limite-plano-usage/', LimitePlanoUsageView.as_view(), name='limite_plano_usage'),
+    path('possui-limite/', PossuiLimiteView.as_view(), name='possui_limite'),
     path('editar-empresa/', EditarEmpresaView.as_view(), name='editar_empresa'),
     path('remover-empresa/', RemoverEmpresaView.as_view(), name='remover_empresa'),
 ]
