@@ -329,9 +329,8 @@ class LoginView(APIView):
 
             now_aware = datetime.now(pytz.utc)
             is_expired = False
-            if plan.plano.nome != "Free Trial":
-                if plan.expira_em.astimezone(pytz.utc) < now_aware:
-                    is_expired = True
+            if plan.expira_em.astimezone(pytz.utc) < now_aware:
+                is_expired = True                
 
             return Response(
                 {
@@ -418,7 +417,6 @@ class EmpresasUsuarioView(APIView):
             )
 
         empresas = usuario.empresas.all()
-        print("Empresas", empresas)
         serializer = EmpresaSerializer(empresas, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -672,12 +670,6 @@ class LimitePlanoUsageView(APIView):
 
         empresas = usuario.empresas.all()
 
-        if not empresas:
-            return Response(
-                {"erro": "Usuário não possui empresas cadastradas."},
-                status=status.HTTP_400_BAD_REQUEST, 
-            )
-
         return Response(
             {
                 "plano_ativo": plano.plano.nome,
@@ -716,10 +708,13 @@ class PagamentosUsuarioView(APIView):
         pagamentos = usuario.pagamento_set.all()
 
         if not pagamentos:
-            return Response(
-                {"erro": "Usuário não possui pagamentos cadastrados."},
-                status=status.HTTP_400_BAD_REQUEST,
+            return Response (
+                {
+                "pagamentos": [],
+                }, 
+                status=status.HTTP_200_OK
             )
+        
         
         return Response(
             {
@@ -1616,39 +1611,192 @@ class EditarServicoView(APIView):
         except Exception as e:
             print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
 class EditarEmpresaView(APIView):
 
+    parser_classes = (MultiPartParser, FormParser)
+
     def post(self, request):
+
+        nome = request.data.get("nome")
+        cnpj = request.data.get("cnpj")
+        endereco = request.data.get("endereco")
+        telefone = request.data.get("telefone")
+        email = request.data.get("email")
+
+        horario_abertura_dia_semana = request.data.get("horario_abertura_dia_semana")
+        horario_fechamento_dia_semana = request.data.get("horario_fechamento_dia_semana")
+
+        horario_abertura_fim_semana = request.data.get("horario_abertura_fim_semana")
+        horario_fechamento_fim_semana = request.data.get("horario_fechamento_fim_semana")
+
+        para_almoco = request.data.get("para_almoco")
+
+        if para_almoco == "true":
+            para_almoco = True
+        else:
+            para_almoco = False
+
+        inicio_almoco = request.data.get("inicio_almoco")
+        fim_almoco = request.data.get("fim_almoco")
+
+        abre_sabado = request.data.get("abre_sabado")
+
+        if abre_sabado == "true":
+            abre_sabado = True
+        else:
+            abre_sabado = False
+
+        abre_domingo = request.data.get("abre_domingo")
+
+        if abre_domingo == "true":
+            abre_domingo = True
+        else:
+            abre_domingo = False
+
+        logo = request.data.get("logo")
+
+        empresa_id = request.data.get("empresa_id")
+
+        if not nome or not cnpj or not endereco or not telefone or not email or not empresa_id:
+
+            return Response(
+                {"erro": "Todos os campos são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         usuario_token = request.data.get("usuario_token")
 
         if not usuario_token:
             return Response(
-                {"erro": "Token de acesso é obrigatório."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         usuario = Token.objects.filter(key=usuario_token).first().user
 
         if not usuario:
             return Response(
-                {"erro": "Token de acesso é inválido."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST 
             )
-        
+
+        try:
+
+            imagem_obj = None
+            if isinstance(logo, ContentFile) or hasattr(logo, 'read'):
+                imagem_obj, _ = Imagem.objects.get_or_createt(imagem=logo)
+            elif isinstance(logo, str) and logo.startswith("http"):
+                imagem_obj, _ = Imagem.objects.get_or_create(imagem_url=logo)
+
+            empresa = Empresa.objects.get(id=empresa_id)
+
+            if nome != empresa.nome and nome != None:
+                empresa.nome = nome
+
+            if cnpj != empresa.cnpj and cnpj != None:
+                empresa.cnpj = cnpj
+
+            if endereco != empresa.endereco and endereco != None:
+                empresa.endereco = endereco
+
+            if telefone != empresa.telefone and telefone != None:
+                empresa.telefone = telefone
+
+            if email != empresa.email and email != None:
+                empresa.email = email
+
+            if horario_abertura_dia_semana != empresa.horario_abertura_dia_semana and horario_abertura_dia_semana != None:
+                empresa.horario_abertura_dia_semana = horario_abertura_dia_semana
+
+            if horario_fechamento_dia_semana != empresa.horario_fechamento_dia_semana and horario_fechamento_dia_semana != None:
+                empresa.horario_fechamento_dia_semana = horario_fechamento_dia_semana
+
+            if horario_abertura_fim_semana != empresa.horario_abertura_fim_de_semana and horario_abertura_fim_semana != None:
+                empresa.horario_abertura_fim_de_semana = horario_abertura_fim_semana
+
+            if horario_fechamento_fim_semana != empresa.horario_fechamento_fim_de_semana and horario_fechamento_fim_semana != None:
+                empresa.horario_fechamento_fim_de_semana = horario_fechamento_fim_semana
+
+            if para_almoco != empresa.para_almoço and para_almoco != None:
+                empresa.para_almoço = para_almoco
+
+            if inicio_almoco != empresa.horario_pausa_inicio and inicio_almoco != None:
+                empresa.horario_pausa_inicio = inicio_almoco
+
+            if fim_almoco != empresa.horario_pausa_fim and fim_almoco != None:
+                empresa.horario_pausa_fim = fim_almoco
+
+            if abre_sabado != empresa.abre_sabado and abre_sabado != None:
+                empresa.abre_sabado = abre_sabado
+
+            if abre_domingo != empresa.abre_domingo and abre_domingo != None:
+                empresa.abre_domingo = abre_domingo
+
+            if imagem_obj != empresa.logo and imagem_obj != None:
+                empresa.logo = imagem_obj
+
+            empresa.save()
+
+            return Response(
+                {
+                    "message": "Empresa editada com sucesso.",
+                    "empresa": EmpresaSerializer(empresa).data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class RemoverEmpresaView(APIView):
+
+    def post(self, request):
+
         empresa_id = request.data.get("empresa_id")
 
         if not empresa_id:
             return Response(
-                {"erro": "ID da empresa é obrigatório."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"erro": "ID da empresa é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
             )
-        
-        nome = request.data.get("nome")
-        cnpj = request.data.get("cnpj")
-        # outros campos + save + return
-        # TODO
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+
+            empresa = Empresa.objects.get(id=empresa_id)
+
+            for funcionario in empresa.funcionarios.all():
+                funcionario.delete()
+
+            for servico in empresa.servicos.all():
+                servico.delete()
+
+            for agendamento in Agendamento.objects.filter(funcionario__empresa=empresa):
+                agendamento.delete()
+
+            empresa.delete()
+
+            return Response(
+                {
+                    "message": "Empresa removida com sucesso.",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class PossuiLimiteView(APIView):
 
