@@ -1850,13 +1850,223 @@ class PossuiLimiteView(APIView):
             else:
                 possui_limite = True
 
-            print("quantia_funcionarios", quantia_funcionarios)
-            print("plano_usuario.quantidade_funcionarios", plano_usuario.quantidade_funcionarios)
-            print("possui_limite", possui_limite)
-
         return Response(
             {
                 "possui_limite": possui_limite,
             },
             status=status.HTTP_201_CREATED,
         )
+
+class FuncionariosCriadosView(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        usuario_token = request.query_params.get("usuario_token")
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        usuario = Token.objects.filter(key=usuario_token).first().user
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        funcionarios = Funcionario.objects.filter(criado_por=usuario)
+
+        if not funcionarios:
+            return Response(
+                {"erro": "Usuário não possui funcionários cadastrados."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        return Response(
+            FuncionarioSerializer(funcionarios, many=True).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+class RemoverFuncionarioView(APIView):
+
+    def post(self, request):
+
+        funcionarios_ids = request.data.get("funcionarios_ids")
+
+        if not funcionarios_ids:
+            return Response(
+                {"erro": "ID do funcionário é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+
+            funcionarios = Funcionario.objects.filter(id__in=funcionarios_ids)
+
+            if not funcionarios:
+                return Response(
+                    {"erro": "Funcionários não encontrados."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            
+            for funcionario in funcionarios:
+
+          
+                if funcionario.criado_por != usuario:
+                    return Response(
+                        {"erro": "Usuário não possui permissão para remover esse funcionário."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                funcionario.delete()
+
+            return Response(
+                {
+                    "message": "Funcionários removidos com sucesso.",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class EditarFuncionarioView(APIView):
+
+    def post(self, request):
+
+        funcionario_id = request.data.get("funcionario_id")
+
+        if not funcionario_id:
+            return Response(
+                {"erro": "ID do funcionário é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        nome = request.data.get("nome")
+        foto = request.data.get("foto")
+
+        try:
+
+            funcionario = Funcionario.objects.filter(id=funcionario_id).first()
+
+            if not funcionario:
+                return Response(
+                    {"erro": "Funcionário não encontrado."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            
+                
+            if nome and nome != funcionario.nome:
+                funcionario.nome = nome
+            if foto and foto != funcionario.foto:
+                funcionario.foto = foto
+
+            funcionario.save()
+
+            return Response(
+                {
+                    "message": "Funcionário editado com sucesso.",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+            
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class RemoverFuncionariosEmpresaView(APIView):
+
+    def post(self, request):
+
+        funcionarios_ids = request.data.get("funcionarios_ids")
+
+        if not funcionarios_ids:
+            return Response(
+                {"erro": "ID do funcionário é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        empresa_id = request.data.get("empresa_id")
+
+        if not empresa_id:
+            return Response(
+                {"erro": "ID da empresa é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        usuario_token = request.data.get("usuario_token")
+
+        if not usuario_token:
+            return Response(
+                {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        usuario = Token.objects.filter(key=usuario_token).first().user
+
+        if not usuario:
+            return Response(
+                {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+
+            funcionarios = Funcionario.objects.filter(id__in=funcionarios_ids)
+
+            if not funcionarios:
+                return Response(
+                    {"erro": "Funcionários não encontrados."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            
+            empresa = Empresa.objects.get(id=empresa_id)
+
+            if empresa.criado_por != usuario:
+                return Response(
+                    {"erro": "Usuário não possui permissão para remover esse funcionário."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            
+            for funcionario in funcionarios:
+
+                if funcionario.criado_por != usuario:
+                    return Response(
+                        {"erro": "Usuário não possui permissão para remover esse funcionário."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                
+                funcionario.empresas.remove(empresa)
+
+            return Response(
+                {
+                    "message": "Funcionários removidos com sucesso.",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            print(e)
+            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
