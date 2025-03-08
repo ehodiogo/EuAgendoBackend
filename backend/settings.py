@@ -30,8 +30,8 @@ RAILWAY_DEPLOYED = os.getenv("RAILWAY_DEPLOYED", "False") == "TRUE"
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "backend-production-7438.up.railway.app"
-    "frontend-production-8641.up.railway.app"
+    "backend-production-7438.up.railway.app",
+    "frontend-production-8641.up.railway.app",
 ]
 
 CORS_ALLOWED_ORIGINS = [
