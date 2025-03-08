@@ -31,8 +31,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "backend-production-7438.up.railway.app"
-    "frontend-production-8641.up.railway.app",
-    "spotthemap.tech",
+    "frontend-production-8641.up.railway.app"
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -42,12 +41,12 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
+    "http://localhost:8080",
+    "https://localhost:8080",
     "https://backend-production-7438.up.railway.app",
     "http://backend-production-7438.up.railway.app",
     "http://frontend-production-8641.up.railway.app",
     "https://frontend-production-8641.up.railway.app",
-    "https://spotthemap.tech",
-    "http://spotthemap.tech",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -57,12 +56,12 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
+    "http://localhost:8080",
+    "https://localhost:8080",
     "https://backend-production-7438.up.railway.app",
     "http://backend-production-7438.up.railway.app",
     "http://frontend-production-8641.up.railway.app",
     "https://frontend-production-8641.up.railway.app",
-    "https://spotthemap.tech",
-    "http://spotthemap.tech",
 ]
 
 CORS_ORIGIN_WHITELIST = [
@@ -72,12 +71,12 @@ CORS_ORIGIN_WHITELIST = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
+    "http://localhost:8080",
+    "https://localhost:8080",
     "https://backend-production-7438.up.railway.app",
     "http://backend-production-7438.up.railway.app",
     "http://frontend-production-8641.up.railway.app",
     "https://frontend-production-8641.up.railway.app",
-    "https://spotthemap.tech",
-    "http://spotthemap.tech",
 ]
 
 CORS_ALLOW_METHODS = [
@@ -203,6 +202,8 @@ USE_I18N = True
 
 USE_TZ = True
 
+USE_L10N = True
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
@@ -214,6 +215,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+#  TODO: Configure email backend
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
