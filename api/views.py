@@ -535,16 +535,23 @@ class DashboardView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        total_funcionarios = Funcionario.objects.filter(empresas=empresa).count()
-        total_clientes = Cliente.objects.count()
-        total_servicos = Servico.objects.count()
+        total_funcionarios = empresa.funcionarios.count()
+
+        total_clientes = Agendamento.objects.filter(funcionario__empresas__in=[empresa]) \
+        .values('cliente') \
+        .distinct() \
+        .count()
+        
+        total_servicos = empresa.servicos.count()
 
         agendamentos_hoje = Agendamento.objects.filter(
-            data=date.today(), funcionario__empresas=empresa, is_continuacao=False
+            data=date.today(), funcionario__empresas__in=[empresa], is_continuacao=False
         ).count()
 
         agendamentos_pendentes = Agendamento.objects.filter(
-            data__gte=date.today(), funcionario__empresas=empresa, is_continuacao=False
+            data__gte=date.today(),
+            funcionario__empresas__in=[empresa],
+            is_continuacao=False,
         ).count()
 
         dados = {
@@ -1882,8 +1889,20 @@ class FuncionariosCriadosView(APIView):
             )
         
         return Response(
-            FuncionarioSerializer(funcionarios, many=True).data,
-            status=status.HTTP_201_CREATED,
+            {
+                "funcionarios" : [ {
+                    "id": funcionario.id,
+                    "nome": funcionario.nome,
+                    "foto_url": funcionario.foto.imagem.url if funcionario.foto else None,
+                    "servicos": [
+                        {
+                            "id": servico.id,
+                            "nome": servico.nome,
+                            "duracao": servico.duracao,
+                        } for servico in funcionario.servicos.all()
+                    ],
+                } for funcionario in funcionarios]
+            }, status=status.HTTP_200_OK
         )
 
 class RemoverFuncionarioView(APIView):
@@ -1999,7 +2018,7 @@ class EditarFuncionarioView(APIView):
         except Exception as e:
             print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
 class RemoverFuncionariosEmpresaView(APIView):
 
     def post(self, request):
