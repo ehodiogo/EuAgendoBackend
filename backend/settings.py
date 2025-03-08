@@ -24,8 +24,8 @@ SECRET_KEY = 'django-insecure-njpai4x6mrb3_6bp_9bb$3bun7m%!zzd*j!ng&8)z8ivphfx!!
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = os.getenv("DEBUG", "False") == "True"
-RAILWAY_DEPLOYED = os.getenv("RAILWAY_DEPLOYED", "False") == "True"
+DEBUG = os.getenv("DEBUG", "False") == "TRUE"
+RAILWAY_DEPLOYED = os.getenv("RAILWAY_DEPLOYED", "False") == "TRUE"
 
 ALLOWED_HOSTS = [
     "localhost",
