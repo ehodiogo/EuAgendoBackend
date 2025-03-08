@@ -152,6 +152,8 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+print("Railway deployed is", RAILWAY_DEPLOYED, type(RAILWAY_DEPLOYED))
+
 if RAILWAY_DEPLOYED:
     DATABASES = {
         "default": {
