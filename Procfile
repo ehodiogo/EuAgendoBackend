@@ -1,1 +1,1 @@
-web: python manage.py makemigrations && python manage.py migrate && python manage.yp CriarAdmin && python manage.py runserver 0.0.0.0:8080
+web: python manage.py makemigrations && python manage.py migrate && python manage.py CriarAdmin && python manage.py runserver 0.0.0.0:8080
