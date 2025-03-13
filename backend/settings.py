@@ -91,24 +91,25 @@ CORS_ALLOW_CREDENTIALS = True
 # Application definition
 
 INSTALLED_APPS = [
-    'corsheaders',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'agendamento',
-    'empresa',
-    'cliente',
-    'servico',
-    'funcionario',
-    'core',
-    'api',
-    'plano',
-    'pagamento',
+    "corsheaders",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "storages",
+    "agendamento",
+    "empresa",
+    "cliente",
+    "servico",
+    "funcionario",
+    "core",
+    "api",
+    "plano",
+    "pagamento",
 ]
 
 REST_FRAMEWORK = {
@@ -210,8 +211,6 @@ USE_L10N = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -226,3 +225,39 @@ EMAIL_HOST_USER = "seu-email@gmail.com"  # Seu email
 EMAIL_HOST_PASSWORD = "sua-senha"  # Sua senha
 DEFAULT_FROM_EMAIL = "seu-email@gmail.com"  # O mesmo email acima
 FRONTEND_URL = "http://localhost:8000"  # URL do frontend para onde o link de recuperação será enviado
+
+print("OS.ENVIRON ", os.environ.get("AWS_ACCESS_KEY"))
+
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_REGION_NAME = "us-east-1"
+AWS_S3_FILE_OVERWRITE = True
+AWS_DEFAULT_ACL = "private"
+AWS_S3_VERIFY = None
+AWS_QUERYSTRING_AUTH = True
+AWS_S3_ADDRESSING_STYLE = "path"
+
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    }
+}
+
+if AWS_ACCESS_KEY_ID:
+    print("Tem chave de acesso da aws")
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {},
+    }
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+else:
+    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+
+print("Storages: ", STORAGES)
+
+MEDIA_URL = "/mediafiles/"
+MEDIA_ROOT = os.path.join(os.path.dirname(__file__), "mediafiles")
+
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(os.path.dirname(__file__), "staticfiles")

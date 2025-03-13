@@ -12,3 +12,5 @@ djangorestframework-simplejwt==5.4.0
 mercadopago==2.2.3
 python-dotenv==1.0.1
 pytz==2025.1
+boto3==1.37.11
+django_storages==1.14.5

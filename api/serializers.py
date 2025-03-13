@@ -90,8 +90,9 @@ class EmpresaSerializer(serializers.ModelSerializer):
         funcionarios = obj.funcionarios.all()
         return [
             {
+                "id": funcionario.id,
                 "nome": funcionario.nome,
-                "foto": funcionario.foto.imagem.url if funcionario.foto else None,
+                "foto": funcionario.foto.imagem.url if funcionario.foto else None or funcionario.foto.imagem_url if funcionario.foto else None,
             }
             for funcionario in funcionarios
         ]
@@ -128,14 +129,14 @@ class ServicosFuncionarioSerializer(serializers.ModelSerializer):
 
 class FuncionarioSerializer(serializers.ModelSerializer):
 
-    foto_url = serializers.SerializerMethodField()
+    foto = serializers.SerializerMethodField()
 
-    def get_foto_url(self, obj):
+    def get_foto(self, obj):
         return obj.foto.imagem.url if obj.foto else None
     
     class Meta:
         model = Funcionario
-        fields = "id", "nome", "foto_url"
+        fields = "id", "nome", "foto"
 
 class ServicoFuncionarioSerializer(serializers.ModelSerializer):
 
