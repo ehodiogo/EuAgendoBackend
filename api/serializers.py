@@ -26,9 +26,15 @@ class ClienteSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class ImagemSerializer(serializers.ModelSerializer):
+
+    imagem_url = serializers.SerializerMethodField()
+
+    def get_imagem_url(self, obj):
+        return obj.imagem.url.split("AWSAccessKeyId=")[0]
+
     class Meta:
         model = Imagem
-        fields = "__all__"
+        fields = "imagem", "imagem_url"
 
 class ServicoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -77,7 +83,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
 
     def get_logo(self, obj):
         if obj.logo:
-            return obj.logo.imagem.url
+            return obj.logo.imagem.url.split("AWSAccessKeyId=")[0]
         return None
 
     def get_servicos(self, obj):
@@ -132,7 +138,7 @@ class FuncionarioSerializer(serializers.ModelSerializer):
     foto = serializers.SerializerMethodField()
 
     def get_foto(self, obj):
-        return obj.foto.imagem.url if obj.foto else None
+        return obj.foto.imagem.url.split("AWSAccessKeyId=")[0] if obj.foto else None
     
     class Meta:
         model = Funcionario
@@ -144,7 +150,7 @@ class ServicoFuncionarioSerializer(serializers.ModelSerializer):
     foto_url = serializers.SerializerMethodField()
 
     def get_foto_url(self, obj):
-        return obj.foto.imagem.url if obj.foto else None
+        return obj.foto.imagem.url.split("AWSAccessKeyId=")[0] if obj.foto else None
     
     class Meta:
         model = Funcionario
