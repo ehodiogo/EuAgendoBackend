@@ -9,7 +9,7 @@ class Imagem(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.imagem:
-            self.imagem_url = self.imagem.url
+            self.imagem_url = self.imagem.url.split("AWSAccessKeyId=")[0]
             super().save(update_fields=["imagem_url"])
 
     def __str__(self):
