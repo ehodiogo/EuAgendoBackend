@@ -815,6 +815,8 @@ class PagamentoPlanoView(APIView):
 class PaymentSuccessView(APIView):
     def post(self, request, *args, **kwargs):
 
+        print("Post payment success", request.data)
+
         plano_nome = request.data.get("plano_nome")
         usuario_token = request.data.get("usuario_token")
 
@@ -902,6 +904,7 @@ class PaymentSuccessView(APIView):
                 )
 
         else:
+            print("Sem plano nome")
 
             try:
                 from pagamento.models import StatusPagamento
@@ -909,6 +912,8 @@ class PaymentSuccessView(APIView):
                 user = Token.objects.filter(key=usuario_token).first().user
 
                 transaction = Pagamento.objects.filter(verified=False, usuario=user, status=StatusPagamento.PENDENTE)
+
+                print("Transacao ", transaction)
 
                 for t in transaction:
                     hash_id = t.hash_mercadopago
@@ -920,48 +925,57 @@ class PaymentSuccessView(APIView):
 
                     payment = sdk.payment().search({"external_reference": hash_id})
 
-                    if payment["response"]["results"][0]["status"] == "approved":
+                    print("Payment", payment)
 
-                        payment_method = payment["response"]["results"][0]["payment_method_id"]
+                    try:
 
-                        from pagamento.models import TipoPagamento
-                        if payment_method == "credit_card":
-                            t.payment_method = TipoPagamento.CARTAO_CREDITO
-                        elif payment_method == "debit_card":
-                            t.payment_method = TipoPagamento.CARTAO_DEBITO
-                        else:
-                            t.payment_method = TipoPagamento.PIX
+                        if payment["response"]["results"][0]["status"] == "approved":
 
-                        t.updated_at = datetime.now()
-                        t.is_verified = True
-                        t.status = StatusPagamento.PAGO
-                        t.save()
+                            print("Aprovado")
 
-                        user_plan = PlanoUsuario.objects.filter(usuario=user).first()
+                            payment_method = payment["response"]["results"][0]["payment_method_id"]
 
-                        if not user_plan:
-                            PlanoUsuario.objects.create(
-                                usuario=user, plano=Plano.objects.get(title="Free Trial"), expira_em=datetime.now() + timedelta(days=30)
+                            from pagamento.models import TipoPagamento
+                            if payment_method == "credit_card":
+                                t.payment_method = TipoPagamento.CARTAO_CREDITO
+                            elif payment_method == "debit_card":
+                                t.payment_method = TipoPagamento.CARTAO_DEBITO
+                            else:
+                                t.payment_method = TipoPagamento.PIX
+
+                            t.updated_at = datetime.now()
+                            t.is_verified = True
+                            t.status = StatusPagamento.PAGO
+                            t.save()
+
+                            user_plan = PlanoUsuario.objects.filter(usuario=user).first()
+
+                            if not user_plan:
+                                PlanoUsuario.objects.create(
+                                    usuario=user, plano=Plano.objects.get(title="Free Trial"), expira_em=datetime.now() + timedelta(days=30)
+                                )
+
+                                user_plan = PlanoUsuario.objects.filter(usuario=user)
+
+                            else:
+                                user_plan = user_plan
+
+                            user_plan.plan = t.plano
+                            user_plan.active = True
+                            user_plan.changed_at = datetime.now()
+                            user_plan.expira_em = datetime.now() + timedelta(
+                                days=30
                             )
+                            user_plan.save()
 
-                            user_plan = PlanoUsuario.objects.filter(usuario=user)
-
-                        else:
-                            user_plan = user_plan
-
-                        user_plan.plan = t.plano
-                        user_plan.active = True
-                        user_plan.changed_at = datetime.now()
-                        user_plan.expira_em = datetime.now() + timedelta(
-                            days=30
-                        )
-                        user_plan.save()
-
-                        return Response(
-                            {"message": "Payment approved. You are now subscribed"},
-                            status=status.HTTP_200_OK,
-                        )
-
+                            return Response(
+                                {"message": "Payment approved. You are now subscribed"},
+                                status=status.HTTP_200_OK,
+                            )
+                        print("Não aprovado")
+                    except Exception as e:
+                        print(e)
+                        
             except Pagamento.DoesNotExist:
                 return Response(
                     {"erro": "Pagamento não encontrado."},
