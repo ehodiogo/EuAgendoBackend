@@ -87,6 +87,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
         return None
 
     def get_servicos(self, obj):
+        print("Servicos ", obj.servicos.all())
         return [
             {"nome": servico.nome, "preco": servico.preco, "duracao": servico.duracao}
             for servico in obj.servicos.all()
