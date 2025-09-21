@@ -12,10 +12,12 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+load_dotenv(BASE_DIR / ".env")
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -153,8 +155,6 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-print("Railway deployed is", RAILWAY_DEPLOYED, type(RAILWAY_DEPLOYED))
-
 if RAILWAY_DEPLOYED:
     DATABASES = {
         "default": {
@@ -226,9 +226,7 @@ EMAIL_HOST_PASSWORD = "sua-senha"  # Sua senha
 DEFAULT_FROM_EMAIL = "seu-email@gmail.com"  # O mesmo email acima
 FRONTEND_URL = "http://localhost:8000"  # URL do frontend para onde o link de recuperação será enviado
 
-print("OS.ENVIRON ", os.environ.get("AWS_ACCESS_KEY"))
-
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
 AWS_S3_REGION_NAME = "us-east-1"
@@ -248,7 +246,6 @@ STORAGES = {
 }
 
 if AWS_ACCESS_KEY_ID:
-    print("Tem chave de acesso da aws")
     STORAGES["default"] = {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
         "OPTIONS": {},
@@ -256,8 +253,6 @@ if AWS_ACCESS_KEY_ID:
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 else:
     DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-
-print("Storages: ", STORAGES)
 
 MEDIA_URL = "/mediafiles/"
 MEDIA_ROOT = os.path.join(os.path.dirname(__file__), "mediafiles")
