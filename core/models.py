@@ -1,11 +1,10 @@
 from django.db import models
 from django.core.files.storage import default_storage
 
-
 class Imagem(models.Model):
-    empresa = models.ForeignKey('empresa.Empresa', on_delete=models.CASCADE, blank=True, null=True)
-    funcionario = models.ForeignKey('funcionario.Funcionario', on_delete=models.CASCADE, blank=True, null=True)
-    imagem = models.FileField(upload_to="imagens/", null=True, blank=True)
+    empresa = models.ForeignKey('empresa.Empresa', on_delete=models.CASCADE, blank=True, null=True, related_name="imagens")
+    funcionario = models.ForeignKey('funcionario.Funcionario', on_delete=models.CASCADE, blank=True, null=True, related_name="imagens")
+    imagem = models.FileField(upload_to='imagens/', null=True, blank=True)
     imagem_url = models.URLField(null=True, blank=True)
 
     def save(self, *args, **kwargs):

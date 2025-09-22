@@ -39,6 +39,7 @@ import mercadopago
 import pytz
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.files.base import ContentFile
+import os
 
 User = get_user_model()
 
@@ -1050,9 +1051,14 @@ class EmpresaCreate(APIView):
 
             imagem_obj = None
             if isinstance(logo, ContentFile) or hasattr(logo, 'read'):
-                imagem_obj = Imagem.objects.create(imagem=logo)
-            elif isinstance(logo, str) and logo.startswith("http"):  # Se for uma URL
+                base_name, ext = os.path.splitext(logo.name)
+                new_filename = f"{base_name}_{nome}_{usuario.username}{ext}"
+                imagem_obj = Imagem()
+                imagem_obj.imagem.save(new_filename, logo, save=True)
+            elif isinstance(logo, str) and logo.startswith("http"):
                 imagem_obj = Imagem.objects.create(imagem_url=logo)
+
+            print("Logo", logo, imagem_obj)
 
             empresa = Empresa.objects.create(
                 nome=nome,
@@ -1124,9 +1130,13 @@ class FuncionarioCreate(APIView):
 
         try:    
 
+            imagem_obj = None
             if isinstance(foto, ContentFile) or hasattr(foto, 'read'):
-                imagem_obj = Imagem.objects.create(imagem=foto)
-            elif isinstance(foto, str) and foto.startswith("http"): 
+                base_name, ext = os.path.splitext(foto.name)
+                new_filename = f"{base_name}_{nome}_{usuario.username}{ext}"
+                imagem_obj = Imagem()
+                imagem_obj.imagem.save(new_filename, foto, save=True)
+            elif isinstance(foto, str) and foto.startswith("http"):
                 imagem_obj = Imagem.objects.create(imagem_url=foto)
 
             funcionario = Funcionario.objects.create(
@@ -1137,10 +1147,10 @@ class FuncionarioCreate(APIView):
 
             if empresa_nome:
                 empresa = Empresa.objects.get(nome=empresa_nome)
+                imagem_obj.empresa = empresa
                 funcionario.empresas.add(empresa)
                 funcionario.save()
 
-            imagem_obj.empresa = empresa
             imagem_obj.funcionario = funcionario
             imagem_obj.save()
 
@@ -1711,8 +1721,16 @@ class EditarEmpresaView(APIView):
             imagem_obj = None
 
             if isinstance(logo, ContentFile) or hasattr(logo, "read"):
-                imagem_obj, _ = Imagem.objects.get_or_create(imagem=logo, empresa__id=empresa_id)
+                base_name, ext = os.path.splitext(logo.name)
+                new_filename = f"{base_name}_{nome}_{usuario.username}{ext}"
 
+                imagem_obj, created = Imagem.objects.get_or_create(
+                    empresa_id=empresa_id,
+                    imagem=f"imagens/{new_filename}",
+                )
+
+                if created:
+                    imagem_obj.imagem.save(new_filename, logo, save=True)
             elif isinstance(logo, str) and logo.startswith("http"):
                 imagem_obj, _ = Imagem.objects.get_or_create(imagem_url=logo, empresa__id=empresa_id)
 

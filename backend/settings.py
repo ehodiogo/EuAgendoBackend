@@ -94,6 +94,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 INSTALLED_APPS = [
     "corsheaders",
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -259,3 +260,23 @@ MEDIA_ROOT = os.path.join(os.path.dirname(__file__), "mediafiles")
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(os.path.dirname(__file__), "staticfiles")
+
+JAZZMIN_SETTINGS = {
+    "site_title": "VemAgendar Admin",
+    "site_header": "VemAgendar",
+    "site_brand": "VemAgendar",
+    "welcome_sign": "Bem-vindo ao painel VemAgendar",
+    "search_model": "auth.User",
+    "user_avatar": None,
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "flatly",
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "bg-primary text-light",
+    "accent": "accent-primary",
+    "form_label_bold": True,
+}

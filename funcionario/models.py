@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 class Funcionario(models.Model):
 
     nome = models.CharField(max_length=200)
-    foto = models.ForeignKey('core.Imagem', on_delete=models.CASCADE, null=True, blank=True)
+    foto = models.ForeignKey('core.Imagem', on_delete=models.CASCADE, null=True, blank=True, related_name="foto_funcionario")
     criado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='funcionarios_criados')
 
     def __str__(self):
