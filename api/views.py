@@ -1076,6 +1076,9 @@ class EmpresaCreate(APIView):
             usuario.empresas.add(empresa)
             usuario.save()
 
+            imagem_obj.empresa = empresa
+            imagem_obj.save()
+
             return Response(
                 {
                     "message": "Empresa criada com sucesso.",
@@ -1136,7 +1139,11 @@ class FuncionarioCreate(APIView):
                 empresa = Empresa.objects.get(nome=empresa_nome)
                 funcionario.empresas.add(empresa)
                 funcionario.save()
-            
+
+            imagem_obj.empresa = empresa
+            imagem_obj.funcionario = funcionario
+            imagem_obj.save()
+
             return Response(
                 {
                     "message": "Funcionário criado com sucesso.",
@@ -1703,12 +1710,11 @@ class EditarEmpresaView(APIView):
 
             imagem_obj = None
 
-            # TODO: tratar imagens com varios nomes repetidos (logo.png, eu.png, etc..)
             if isinstance(logo, ContentFile) or hasattr(logo, "read"):
-                imagem_obj, _ = Imagem.objects.get_or_create(imagem=logo)
+                imagem_obj, _ = Imagem.objects.get_or_create(imagem=logo, empresa__id=empresa_id)
 
             elif isinstance(logo, str) and logo.startswith("http"):
-                imagem_obj, _ = Imagem.objects.get_or_create(imagem_url=logo)
+                imagem_obj, _ = Imagem.objects.get_or_create(imagem_url=logo, empresa__id=empresa_id)
 
             empresa = Empresa.objects.get(id=empresa_id)
 
