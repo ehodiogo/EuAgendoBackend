@@ -83,7 +83,10 @@ class EmpresaSerializer(serializers.ModelSerializer):
 
     def get_logo(self, obj):
         if obj.logo:
-            return obj.logo.imagem.url.split("AWSAccessKeyId=")[0]
+            if obj.logo.imagem and obj.logo.imagem.name:
+                return obj.logo.imagem.url.split("AWSAccessKeyId=")[0]
+            if obj.logo.imagem_url:
+                return obj.logo.imagem_url
         return None
 
     def get_servicos(self, obj):

@@ -8,9 +8,13 @@ class Imagem(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        if self.imagem:
+
+        if self.imagem and self.imagem.name:
+            # gera url limpa do S3
             self.imagem_url = self.imagem.url.split("AWSAccessKeyId=")[0]
-        if "AWSAccessKeyId=" in self.imagem_url:
+            super().save(update_fields=["imagem_url"])
+
+        elif self.imagem_url and "AWSAccessKeyId=" in self.imagem_url:
             self.imagem_url = self.imagem_url.split("AWSAccessKeyId=")[0]
             super().save(update_fields=["imagem_url"])
 

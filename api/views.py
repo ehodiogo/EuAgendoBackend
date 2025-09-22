@@ -1702,8 +1702,11 @@ class EditarEmpresaView(APIView):
         try:
 
             imagem_obj = None
-            if isinstance(logo, ContentFile) or hasattr(logo, 'read'):
-                imagem_obj, _ = Imagem.objects.get_or_createt(imagem=logo)
+
+            # TODO: tratar imagens com varios nomes repetidos (logo.png, eu.png, etc..)
+            if isinstance(logo, ContentFile) or hasattr(logo, "read"):
+                imagem_obj, _ = Imagem.objects.get_or_create(imagem=logo)
+
             elif isinstance(logo, str) and logo.startswith("http"):
                 imagem_obj, _ = Imagem.objects.get_or_create(imagem_url=logo)
 
@@ -1765,7 +1768,7 @@ class EditarEmpresaView(APIView):
             )
 
         except Exception as e:
-            print(e)
+            print("ERRO:", e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class RemoverEmpresaView(APIView):
@@ -1803,7 +1806,8 @@ class RemoverEmpresaView(APIView):
             for servico in empresa.servicos.all():
                 servico.delete()
 
-            for agendamento in Agendamento.objects.filter(funcionario__empresa=empresa):
+            print("Removendo os agendamentos agora")
+            for agendamento in Agendamento.objects.filter(funcionario__empresas=empresa):
                 agendamento.delete()
 
             empresa.delete()

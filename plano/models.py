@@ -26,7 +26,7 @@ class PlanoUsuario(models.Model):
     changed_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.plano.nome
+        return f"{self.plano.nome} de {self.usuario.username}"
     
     class Meta:
         verbose_name = 'Plano do Usuário'
