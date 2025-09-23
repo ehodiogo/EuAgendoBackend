@@ -6,7 +6,8 @@ from .serializers import (
     ImagemSerializer,
     ServicoSerializer,
     EmpresaServicoFuncionarioSerializer,
-    ServicoFuncionarioSerializer
+    ServicoFuncionarioSerializer,
+    AgendamentoAvaliacaoSerializer
 )
 from agendamento.models import Agendamento
 from cliente.models import Cliente
@@ -51,6 +52,16 @@ class AgendamentoViewSet(viewsets.ModelViewSet):
 
     def get_renderers(self):
         """Garante que a API só use JSON, evitando erro de template"""
+        from rest_framework.renderers import JSONRenderer
+        return [JSONRenderer()]
+
+class AgendamentoAvaliacaoViewSet(viewsets.ModelViewSet):
+    queryset = Agendamento.objects.all()
+    serializer_class = AgendamentoAvaliacaoSerializer
+    filter_backends = [DjangoFilterBackend]
+    lookup_field = "identificador"
+
+    def get_renderers(self):
         from rest_framework.renderers import JSONRenderer
         return [JSONRenderer()]
 
@@ -151,8 +162,8 @@ class AgendamentoCreateView(APIView):
         data = request.data.get("data")
         hora = request.data.get("hora")
         cliente_nome = request.data.get("cliente_nome")
-        cliente_email = request.data.get("cliente_email")  
-        cliente_numero = request.data.get("cliente_numero") 
+        cliente_email = request.data.get("cliente_email")
+        cliente_numero = request.data.get("cliente_numero")
         servico_nome = request.data.get("servico_nome")
         duracao_minima = request.data.get("duracao_minima")
 

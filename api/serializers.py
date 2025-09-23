@@ -20,6 +20,47 @@ class AgendamentoSerializer(serializers.ModelSerializer):
         model = Agendamento
         fields = "__all__"
 
+class FuncionarioSerializer(serializers.ModelSerializer):
+    foto = serializers.SerializerMethodField()
+
+    def get_foto(self, obj):
+        return obj.foto.imagem.url.split("AWSAccessKeyId=")[0] if obj.foto else None
+
+    class Meta:
+        model = Funcionario
+        fields = "id", "nome", "foto"
+
+class AgendamentoAvaliacaoSerializer(serializers.ModelSerializer):
+
+    duracao_servico = serializers.SerializerMethodField()
+    servico_nome = serializers.SerializerMethodField()
+    cliente_nome = serializers.SerializerMethodField()
+    funcionario = FuncionarioSerializer()
+
+    def get_duracao_servico(self, obj):
+        return obj.servico.duracao
+
+    def get_servico_nome(self, obj):
+        return obj.servico.nome
+
+    def get_cliente_nome(self, obj):
+        return obj.cliente.nome
+
+    class Meta:
+        model = Agendamento
+        fields = [
+            'id',
+            'duracao_servico',
+            'servico_nome',
+            'cliente_nome',
+            'funcionario',
+            'data',
+            'hora',
+            'nota_avaliacao',
+            'descricao_avaliacao'
+        ]
+
+
 class ClienteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cliente
@@ -136,17 +177,6 @@ class ServicosFuncionarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Servico
         fields = 'id', 'nome', 'preco', 'duracao'
-
-class FuncionarioSerializer(serializers.ModelSerializer):
-
-    foto = serializers.SerializerMethodField()
-
-    def get_foto(self, obj):
-        return obj.foto.imagem.url.split("AWSAccessKeyId=")[0] if obj.foto else None
-    
-    class Meta:
-        model = Funcionario
-        fields = "id", "nome", "foto"
 
 class ServicoFuncionarioSerializer(serializers.ModelSerializer):
 

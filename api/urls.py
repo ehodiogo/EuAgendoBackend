@@ -9,6 +9,7 @@ from .views import ServicosCriadosUsuarioEmpresaView, AdicionarServicoFuncionari
 from .views import RemoverServicoEmpresaView, RemoverServicosFuncionarioView, EditarServicoView
 from .views import PossuiLimiteView, EditarEmpresaView, RemoverEmpresaView, FuncionariosCriadosView
 from .views import RemoverFuncionarioView, EditarFuncionarioView, RemoverFuncionariosEmpresaView
+from .views import AgendamentoAvaliacaoViewSet
 from rest_framework import routers
 from django.urls import path
 
@@ -20,7 +21,7 @@ router.register(r'funcionario', FuncionarioViewSet)
 router.register(r'imagem', ImagemViewSet)
 router.register(r'servico', ServicoViewSet)
 router.register(r'empresaservico', EmpresaServicoViewSet, basename='empresaservico')
-
+router.register(r'agendamento-avaliar', AgendamentoAvaliacaoViewSet, basename='agendamentoavaliar')
 urlpatterns = router.urls
 
 urlpatterns += [
