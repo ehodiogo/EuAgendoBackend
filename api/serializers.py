@@ -200,7 +200,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
 class ServicosFuncionarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Servico
-        fields = 'id', 'nome', 'preco', 'duracao'
+        fields = 'id', 'nome', 'preco', 'duracao', 'descricao'
 
 class ServicoFuncionarioSerializer(serializers.ModelSerializer):
 
