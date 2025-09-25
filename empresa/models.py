@@ -9,6 +9,11 @@ class Empresa(models.Model):
 
     cnpj = models.CharField(max_length=100)
     endereco = models.CharField(max_length=100)
+    bairro = models.CharField(max_length=100, null=True, blank=True)
+    cidade = models.CharField(max_length=100, null=True, blank=True)
+    estado = models.CharField(max_length=100, null=True, blank=True)
+    pais = models.CharField(max_length=100, null=True, blank=True)
+
     telefone = models.CharField(max_length=100)
     email = models.EmailField(max_length=100)
 
@@ -19,7 +24,7 @@ class Empresa(models.Model):
     horario_abertura_dia_semana = models.TimeField()
     horario_fechamento_dia_semana = models.TimeField()
 
-    para_almoço = models.BooleanField(default=False)
+    para_almoco = models.BooleanField(default=False)
     horario_pausa_inicio = models.TimeField(null=True, blank=True)
     horario_pausa_fim = models.TimeField(null=True, blank=True)
 
@@ -40,6 +45,11 @@ class Empresa(models.Model):
         if not self.slug:
             self.slug = slugify(self.nome)
         super(Empresa, self).save(*args, **kwargs)
+
+    def endereco_completo(self):
+        partes = [self.endereco, self.bairro, self.cidade, self.estado, self.pais]
+        partes = [p for p in partes if p]
+        return ", ".join(partes)
 
     class Meta:
         verbose_name = 'Empresa'

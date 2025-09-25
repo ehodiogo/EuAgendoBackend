@@ -65,6 +65,21 @@ class AgendamentoAvaliacaoViewSet(viewsets.ModelViewSet):
         from rest_framework.renderers import JSONRenderer
         return [JSONRenderer()]
 
+    @action(detail=True, methods=["post"], url_path="avaliar")
+    def avaliar(self, request, identificador=None):
+        agendamento = self.get_object()
+
+        serializer = AgendamentoAvaliacaoSerializer(
+            agendamento,
+            data=request.data,
+            partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
@@ -987,7 +1002,7 @@ class PaymentSuccessView(APIView):
                         print("Não aprovado")
                     except Exception as e:
                         print(e)
-                        
+
             except Pagamento.DoesNotExist:
                 return Response(
                     {"erro": "Pagamento não encontrado."},
@@ -1003,14 +1018,18 @@ class EmpresaCreate(APIView):
         nome = request.data.get("nome")
         cnpj = request.data.get("cnpj")
         endereco = request.data.get("endereco")
+        bairro = request.data.get("bairro")
+        cidade = request.data.get("cidade")
+        estado = request.data.get("estado")
+        pais = request.data.get("pais")
         telefone = request.data.get("telefone")
         email = request.data.get("email")
 
         horario_abertura_dia_semana = request.data.get("horario_abertura_dia_semana")
         horario_fechamento_dia_semana = request.data.get("horario_fechamento_dia_semana")
 
-        horario_abertura_fim_semana = request.data.get("horario_abertura_fim_semana")
-        horario_fechamento_fim_semana = request.data.get("horario_fechamento_fim_semana")
+        horario_abertura_fim_semana = request.data.get("horario_abertura_fim_de_semana")
+        horario_fechamento_fim_semana = request.data.get("horario_fechamento_fim_de_semana")
 
         para_almoco = request.data.get("para_almoco")
 
@@ -1069,19 +1088,21 @@ class EmpresaCreate(APIView):
             elif isinstance(logo, str) and logo.startswith("http"):
                 imagem_obj = Imagem.objects.create(imagem_url=logo)
 
-            print("Logo", logo, imagem_obj)
-
             empresa = Empresa.objects.create(
                 nome=nome,
                 cnpj=cnpj,
                 endereco=endereco,
+                bairro=bairro,
+                cidade=cidade,
+                estado=estado,
+                pais=pais,
                 telefone=telefone,
                 email=email,
                 horario_abertura_dia_semana=horario_abertura_dia_semana,
                 horario_fechamento_dia_semana=horario_fechamento_dia_semana,
                 horario_abertura_fim_de_semana=horario_abertura_fim_semana,
                 horario_fechamento_fim_de_semana=horario_fechamento_fim_semana,
-                para_almoço=para_almoco,
+                para_almoco=para_almoco,
                 horario_pausa_inicio=inicio_almoco,
                 horario_pausa_fim=fim_almoco,
                 abre_sabado=abre_sabado,
@@ -1105,7 +1126,6 @@ class EmpresaCreate(APIView):
             )
 
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class FuncionarioCreate(APIView):
@@ -1174,7 +1194,6 @@ class FuncionarioCreate(APIView):
             )
 
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class ServicoCreate(APIView):
@@ -1223,7 +1242,6 @@ class ServicoCreate(APIView):
             )
 
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class AdicionarFuncionariosEmpresa(APIView):
@@ -1277,7 +1295,6 @@ class AdicionarFuncionariosEmpresa(APIView):
             )
         
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class FuncionariosCriadosView(APIView):
@@ -1386,7 +1403,6 @@ class AdicionarServicosFuncionario(APIView):
             )
         
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class ServicosCriadosUsuarioEmpresaView(APIView):
@@ -1429,7 +1445,6 @@ class ServicosCriadosUsuarioEmpresaView(APIView):
             )
         
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class AdicionarServicoFuncionariosView(APIView):
@@ -1482,7 +1497,6 @@ class AdicionarServicoFuncionariosView(APIView):
             )
     
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class RemoverServicoEmpresaView(APIView):
@@ -1539,7 +1553,6 @@ class RemoverServicoEmpresaView(APIView):
             )
 
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class RemoverServicosFuncionarioView(APIView):
@@ -1596,7 +1609,6 @@ class RemoverServicosFuncionarioView(APIView):
             )
 
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class EditarServicoView(APIView):
@@ -1658,7 +1670,6 @@ class EditarServicoView(APIView):
             )
         
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class EditarEmpresaView(APIView):
@@ -1670,14 +1681,18 @@ class EditarEmpresaView(APIView):
         nome = request.data.get("nome")
         cnpj = request.data.get("cnpj")
         endereco = request.data.get("endereco")
+        bairro = request.data.get("bairro")
+        cidade = request.data.get("cidade")
+        estado = request.data.get("estado")
+        pais = request.data.get("pais")
         telefone = request.data.get("telefone")
         email = request.data.get("email")
 
         horario_abertura_dia_semana = request.data.get("horario_abertura_dia_semana")
         horario_fechamento_dia_semana = request.data.get("horario_fechamento_dia_semana")
 
-        horario_abertura_fim_semana = request.data.get("horario_abertura_fim_semana")
-        horario_fechamento_fim_semana = request.data.get("horario_fechamento_fim_semana")
+        horario_abertura_fim_semana = request.data.get("horario_abertura_fim_de_semana")
+        horario_fechamento_fim_semana = request.data.get("horario_fechamento_fim_de_semana")
 
         para_almoco = request.data.get("para_almoco")
 
@@ -1756,6 +1771,18 @@ class EditarEmpresaView(APIView):
             if endereco != empresa.endereco and endereco != None:
                 empresa.endereco = endereco
 
+            if bairro != empresa.bairro and bairro != None:
+                empresa.bairro = bairro
+
+            if cidade != empresa.cidade and cidade != None:
+                empresa.cidade = cidade
+
+            if estado != empresa.estado and estado != None:
+                empresa.estado = estado
+
+            if pais != empresa.pais and pais != None:
+                empresa.pais = pais
+
             if telefone != empresa.telefone and telefone != None:
                 empresa.telefone = telefone
 
@@ -1774,8 +1801,8 @@ class EditarEmpresaView(APIView):
             if horario_fechamento_fim_semana != empresa.horario_fechamento_fim_de_semana and horario_fechamento_fim_semana != None:
                 empresa.horario_fechamento_fim_de_semana = horario_fechamento_fim_semana
 
-            if para_almoco != empresa.para_almoço and para_almoco != None:
-                empresa.para_almoço = para_almoco
+            if para_almoco != empresa.para_almoco and para_almoco != None:
+                empresa.para_almoco = para_almoco
 
             if inicio_almoco != empresa.horario_pausa_inicio and inicio_almoco != None:
                 empresa.horario_pausa_inicio = inicio_almoco
@@ -1803,7 +1830,6 @@ class EditarEmpresaView(APIView):
             )
 
         except Exception as e:
-            print("ERRO:", e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class RemoverEmpresaView(APIView):
@@ -1841,7 +1867,6 @@ class RemoverEmpresaView(APIView):
             for servico in empresa.servicos.all():
                 servico.delete()
 
-            print("Removendo os agendamentos agora")
             for agendamento in Agendamento.objects.filter(funcionario__empresas=empresa):
                 agendamento.delete()
 
@@ -1855,7 +1880,6 @@ class RemoverEmpresaView(APIView):
             )
 
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class PossuiLimiteView(APIView):
@@ -2012,7 +2036,6 @@ class RemoverFuncionarioView(APIView):
             )
 
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class EditarFuncionarioView(APIView):
@@ -2069,7 +2092,6 @@ class EditarFuncionarioView(APIView):
             )
             
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class RemoverFuncionariosEmpresaView(APIView):
@@ -2140,5 +2162,4 @@ class RemoverFuncionariosEmpresaView(APIView):
             )
 
         except Exception as e:
-            print(e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)

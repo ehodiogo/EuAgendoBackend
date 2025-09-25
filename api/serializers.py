@@ -12,9 +12,21 @@ from django.utils import timezone
 class AgendamentoSerializer(serializers.ModelSerializer):
 
     duracao_servico = serializers.SerializerMethodField()
+    cliente_nome = serializers.SerializerMethodField()
+    funcionario_nome = serializers.SerializerMethodField()
+    servico_nome = serializers.SerializerMethodField()
 
     def get_duracao_servico(self, obj):
         return obj.servico.duracao
+
+    def get_cliente_nome(self, obj):
+        return obj.cliente.nome
+
+    def get_funcionario_nome(self, obj):
+        return obj.funcionario.nome
+
+    def get_servico_nome(self, obj):
+        return obj.servico.nome
 
     class Meta:
         model = Agendamento
@@ -57,7 +69,8 @@ class AgendamentoAvaliacaoSerializer(serializers.ModelSerializer):
             'data',
             'hora',
             'nota_avaliacao',
-            'descricao_avaliacao'
+            'descricao_avaliacao',
+            'compareceu_agendamento'
         ]
 
 
@@ -88,6 +101,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
     funcionarios = serializers.SerializerMethodField()
     assinatura_ativa = serializers.SerializerMethodField()
     assinatura_vencimento = serializers.SerializerMethodField()
+    endereco = serializers.SerializerMethodField()
 
     def get_assinatura_ativa(self, obj):
 
@@ -148,6 +162,9 @@ class EmpresaSerializer(serializers.ModelSerializer):
             for funcionario in funcionarios
         ]
 
+    def get_endereco(self, obj):
+        return obj.endereco_completo()
+
     class Meta:
         model = Empresa
         fields = (
@@ -155,6 +172,10 @@ class EmpresaSerializer(serializers.ModelSerializer):
             "nome",
             "cnpj",
             "endereco",
+            "bairro",
+            "cidade",
+            "estado",
+            "pais",
             "telefone",
             "email",
             "logo",
@@ -165,7 +186,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
             "horario_fechamento_fim_de_semana",
             "abre_sabado",
             "abre_domingo",
-            "para_almoço",
+            "para_almoco",
             "horario_pausa_inicio",
             "horario_pausa_fim",
             "funcionarios",

@@ -12,6 +12,9 @@ class Servico(models.Model):
 
     criado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='servicos_criados')
 
+    pontos_resgate = models.IntegerField(default=0)
+    pontos_gerados = models.IntegerField(default=0)
+
     def __str__(self):
         return self.nome
     
