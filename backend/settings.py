@@ -26,8 +26,8 @@ SECRET_KEY = 'django-insecure-njpai4x6mrb3_6bp_9bb$3bun7m%!zzd*j!ng&8)z8ivphfx!!
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = os.getenv("DEBUG", "False") == "TRUE"
-RAILWAY_DEPLOYED = os.getenv("RAILWAY_DEPLOYED", "False") == "TRUE"
+DEBUG = os.getenv("DEBUG", "False") == "True"
+RAILWAY_DEPLOYED = os.getenv("RAILWAY_DEPLOYED", "False") == "True"
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -86,6 +86,7 @@ CORS_ALLOW_METHODS = [
     "POST",
     "PUT",
     "DELETE",
+    "PATCH"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -113,6 +114,7 @@ INSTALLED_APPS = [
     "api",
     "plano",
     "pagamento",
+    "usuario",
 ]
 
 REST_FRAMEWORK = {

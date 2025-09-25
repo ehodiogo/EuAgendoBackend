@@ -13,6 +13,8 @@ from .views import AgendamentoAvaliacaoViewSet
 from rest_framework import routers
 from django.urls import path
 
+from usuario.views import PerfilUsuarioViewSet
+
 router = routers.DefaultRouter()
 router.register(r'agendamento', AgendamentoViewSet)
 router.register(r'cliente', ClienteViewSet)
@@ -22,6 +24,7 @@ router.register(r'imagem', ImagemViewSet)
 router.register(r'servico', ServicoViewSet)
 router.register(r'empresaservico', EmpresaServicoViewSet, basename='empresaservico')
 router.register(r'agendamento-avaliar', AgendamentoAvaliacaoViewSet, basename='agendamentoavaliar')
+router.register(r'perfil-usuario', PerfilUsuarioViewSet, basename='perfil-usuario')
 urlpatterns = router.urls
 
 urlpatterns += [
