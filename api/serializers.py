@@ -9,6 +9,9 @@ from django.contrib.auth import get_user_model, authenticate
 from plano.models import Plano, PlanoUsuario
 from django.utils import timezone
 
+from usuario.models import PerfilUsuario
+
+
 class AgendamentoSerializer(serializers.ModelSerializer):
 
     duracao_servico = serializers.SerializerMethodField()
@@ -222,12 +225,21 @@ class EmpresaServicoFuncionarioSerializer(serializers.ModelSerializer):
 User = get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
+    codigo_usado = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     class Meta:
         model = User
-        fields = ["username", "email", "password", "first_name"]
+        fields = ["username", "email", "password", "first_name", "codigo_usado"]
 
     def create(self, validated_data):
+        codigo_usado = validated_data.pop("codigo_usado", None)
+
         user = User.objects.create_user(**validated_data)
+
+        perfil = PerfilUsuario.objects.get(user=user)
+        if codigo_usado:
+            perfil.codigo_usado = codigo_usado
+            perfil.save()
+
         return user
 
 
