@@ -1,19 +1,18 @@
-from .views import AgendamentoViewSet, ClienteViewSet, EmpresaViewSet, FuncionarioViewSet
-from .views import ImagemViewSet, ServicoViewSet, EmpresaServicoViewSet, AgendamentoCreateView
-from .views import FuncionarioAgendamentoView, LoginView, RegisterView, PasswordRecoveryView
-from .views import AgendamentosHojeView, EmpresasUsuarioView, UserView, DashboardView, FinanceiroView
-from .views import ChangePasswordView, LimitePlanoUsageView, PagamentosUsuarioView, PagamentoPlanoView
-from .views import PaymentSuccessView, EmpresaCreate, FuncionarioCreate, ServicoCreate
-from .views import AdicionarFuncionariosEmpresa, FuncionariosCriadosView, AdicionarServicosFuncionario
-from .views import ServicosCriadosUsuarioEmpresaView, AdicionarServicoFuncionariosView
-from .views import RemoverServicoEmpresaView, RemoverServicosFuncionarioView, EditarServicoView
-from .views import PossuiLimiteView, EditarEmpresaView, RemoverEmpresaView, FuncionariosCriadosView
-from .views import RemoverFuncionarioView, EditarFuncionarioView, RemoverFuncionariosEmpresaView
-from .views import AgendamentoAvaliacaoViewSet
+
+from servico.views import ServicoViewSet, ServicoCreate, ServicosCriadosUsuarioEmpresaView, RemoverServicoEmpresaView
+from servico.views import AdicionarServicoFuncionariosView, AdicionarServicosFuncionario, RemoverServicosFuncionarioView, EditarServicoView
+from empresa.views import EmpresaViewSet, EmpresaServicoViewSet, FinanceiroView, EmpresaCreate, EditarEmpresaView, RemoverEmpresaView
+from core.views import ImagemViewSet
+from cliente.views import ClienteViewSet
+from agendamento.views import AgendamentoAvaliacaoViewSet, AgendamentoViewSet, AgendamentoCreateView, AgendamentosHojeView
+from funcionario.views import FuncionarioViewSet, FuncionarioAgendamentoView, FuncionariosCriadosView, RemoverFuncionarioView, EditarFuncionarioView
+from funcionario.views import FuncionarioCreate, AdicionarFuncionariosEmpresa, RemoverFuncionariosEmpresaView
+from usuario.views import PerfilUsuarioViewSet, RegisterView, LoginView, PasswordRecoveryView, EmpresasUsuarioView
+from usuario.views import UserView, ChangePasswordView, DashboardView
+from pagamento.views import PagamentoPlanoView, LimitePlanoUsageView, PagamentosUsuarioView, PaymentSuccessView, PossuiLimiteView
+
 from rest_framework import routers
 from django.urls import path
-
-from usuario.views import PerfilUsuarioViewSet
 
 router = routers.DefaultRouter()
 router.register(r'agendamento', AgendamentoViewSet)
