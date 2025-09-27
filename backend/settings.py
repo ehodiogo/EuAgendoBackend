@@ -60,10 +60,10 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5174",
     "http://localhost:8080",
     "https://localhost:8080",
-    "https://backend-production-7438.up.railway.app",
-    "http://backend-production-7438.up.railway.app",
-    "http://frontend-production-8641.up.railway.app",
-    "https://frontend-production-8641.up.railway.app",
+    "https://backend-production-6587.up.railway.app",
+    "http://backend-production-6587.up.railway.app",
+    "http://frontend-production-9e87.up.railway.app",
+    "https://frontend-production-9e87.up.railway.app",
 ]
 
 CORS_ORIGIN_WHITELIST = [
@@ -75,10 +75,10 @@ CORS_ORIGIN_WHITELIST = [
     "http://127.0.0.1:5174",
     "http://localhost:8080",
     "https://localhost:8080",
-    "https://backend-production-7438.up.railway.app",
-    "http://backend-production-7438.up.railway.app",
-    "http://frontend-production-8641.up.railway.app",
-    "https://frontend-production-8641.up.railway.app",
+    "https://backend-production-6587.up.railway.app",
+    "http://backend-production-6587.up.railway.app",
+    "http://frontend-production-9e87.up.railway.app",
+    "https://frontend-production-9e87.up.railway.app",
 ]
 
 CORS_ALLOW_METHODS = [
