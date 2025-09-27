@@ -262,7 +262,7 @@ MEDIA_URL = "/mediafiles/"
 MEDIA_ROOT = os.path.join(os.path.dirname(__file__), "mediafiles")
 
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(os.path.dirname(__file__), "staticfiles")
+STATIC_ROOT = BASE_DIR / "backend/staticfiles"
 
 JAZZMIN_SETTINGS = {
     "site_title": "VemAgendar Admin",
