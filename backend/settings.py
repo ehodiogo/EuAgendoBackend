@@ -159,6 +159,9 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+print("Railway deployed: ", RAILWAY_DEPLOYED)
+print("OS ENV RAILWAY ", os.environ.get("RAILWAY_DEPLOYED"))
+
 if RAILWAY_DEPLOYED:
     DATABASES = {
         "default": {
