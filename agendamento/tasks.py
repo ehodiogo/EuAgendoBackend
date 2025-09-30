@@ -1,9 +1,10 @@
 from celery import shared_task
 from django.core.mail import send_mail
 from django.utils import timezone
-from datetime import datetime
+from datetime import datetime, timedelta
 from .models import Agendamento
 
+EMAIL_REMETENTE = "vemagendar@gmail.com"
 
 @shared_task
 def enviar_email_agendamento(agendamento_id):
@@ -37,7 +38,7 @@ def enviar_email_agendamento(agendamento_id):
     send_mail(
         assunto,
         mensagem_txt,
-        "vemagendar@gmail.com",
+        EMAIL_REMETENTE,
         [agendamento.cliente.email],
         html_message=mensagem_html,
     )
@@ -45,6 +46,7 @@ def enviar_email_agendamento(agendamento_id):
 
 @shared_task
 def enviar_email_lembrete(agendamento_id, minutos):
+
     agendamento = Agendamento.objects.get(id=agendamento_id)
 
     agora = timezone.now()
@@ -53,10 +55,7 @@ def enviar_email_lembrete(agendamento_id, minutos):
     )
     diferenca = (agendamento_datetime - agora).total_seconds() / 60
 
-    # Evita enviar lembrete se já estiver muito próximo
-    if minutos == 60 and diferenca < 60:
-        return
-    if minutos == 30 and diferenca < 30:
+    if diferenca <= 0:
         return
 
     assunto = f"⏰ Lembrete: seu agendamento é em {minutos} minutos"
@@ -88,7 +87,7 @@ def enviar_email_lembrete(agendamento_id, minutos):
     send_mail(
         assunto,
         mensagem_txt,
-        "vemagendar@gmail.com",
+        EMAIL_REMETENTE,
         [agendamento.cliente.email],
         html_message=mensagem_html,
     )
