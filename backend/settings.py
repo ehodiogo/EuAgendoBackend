@@ -31,9 +31,10 @@ RAILWAY_DEPLOYED = os.getenv("RAILWAY_DEPLOYED", "False") == "True"
 
 ALLOWED_HOSTS = [
     "localhost",
+    "backend.localhost",
+    "vemagendar.com.br",
+    "backend.vemagendar.com.br",
     "127.0.0.1",
-    "backend-production-6587.up.railway.app",
-    "frontend-production-9e87.up.railway.app",
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -45,41 +46,13 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5174",
     "http://localhost:8080",
     "https://localhost:8080",
-    "https://backend-production-6587.up.railway.app",
-    "http://backend-production-6587.up.railway.app",
-    "http://frontend-production-9e87.up.railway.app",
-    "https://frontend-production-9e87.up.railway.app",
+    "http://vemagendar.com.br",
+    "https://vemagendar.com.br",
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-    "http://localhost:8080",
-    "https://localhost:8080",
-    "https://backend-production-6587.up.railway.app",
-    "http://backend-production-6587.up.railway.app",
-    "http://frontend-production-9e87.up.railway.app",
-    "https://frontend-production-9e87.up.railway.app",
-]
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-    "http://localhost:8080",
-    "https://localhost:8080",
-    "https://backend-production-6587.up.railway.app",
-    "http://backend-production-6587.up.railway.app",
-    "http://frontend-production-9e87.up.railway.app",
-    "https://frontend-production-9e87.up.railway.app",
-]
+CORS_ORIGIN_WHITELIST = CSRF_TRUSTED_ORIGINS
 
 CORS_ALLOW_METHODS = [
     "GET",
