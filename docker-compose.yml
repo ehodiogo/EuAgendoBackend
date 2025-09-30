@@ -16,12 +16,33 @@ services:
       - .env
     depends_on:
       - redis
+      - db
+    networks:
+      - vemagendar_network
 
   redis:
     image: redis:7-alpine
     container_name: redis_broker
     ports:
       - "${REDIS_PORT}:6379"
+    networks:
+      - vemagendar_network
+
+  db:
+    image: postgres:16-alpine
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+      POSTGRES_DB: ${PGDATABASE}
+      POSTGRES_PORT: ${PGPORT}
+      POSTGRES_HOST: ${PGHOST}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - vemagendar_network
 
   celery:
     build: .
@@ -34,6 +55,9 @@ services:
     depends_on:
       - redis
       - web
+      - db
+    networks:
+      - vemagendar_network
 
   celery-beat:
     build: .
@@ -46,6 +70,9 @@ services:
     depends_on:
       - redis
       - web
+      - db
+    networks:
+      - vemagendar_network
 
   flower:
     build: .
@@ -55,6 +82,14 @@ services:
       - "5555:5555"
     depends_on:
       - redis
+      - db
+    networks:
+      - vemagendar_network
 
 volumes:
   static_volume:
+  postgres_data:
+
+networks:
+  vemagendar_network:
+    external: true
