@@ -46,6 +46,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5174",
     "http://localhost:8080",
     "https://localhost:8080",
+    "http://backend.vemagendar.com.br",
+    "https://backend.vemagendar.com.br",
     "http://vemagendar.com.br",
     "https://vemagendar.com.br",
 ]
