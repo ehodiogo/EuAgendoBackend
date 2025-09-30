@@ -10,7 +10,6 @@ class EmpresaSerializer(serializers.ModelSerializer):
     funcionarios = serializers.SerializerMethodField()
     assinatura_ativa = serializers.SerializerMethodField()
     assinatura_vencimento = serializers.SerializerMethodField()
-    endereco = serializers.SerializerMethodField()
 
     def get_assinatura_ativa(self, obj):
 
@@ -52,7 +51,6 @@ class EmpresaSerializer(serializers.ModelSerializer):
         return None
 
     def get_servicos(self, obj):
-        print("Servicos ", obj.servicos.all())
         return [
             {"nome": servico.nome, "preco": servico.preco, "duracao": servico.duracao}
             for servico in obj.servicos.all()
@@ -68,9 +66,6 @@ class EmpresaSerializer(serializers.ModelSerializer):
             }
             for funcionario in funcionarios
         ]
-
-    def get_endereco(self, obj):
-        return obj.endereco_completo()
 
     class Meta:
         model = Empresa
