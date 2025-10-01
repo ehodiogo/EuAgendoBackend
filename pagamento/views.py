@@ -154,17 +154,15 @@ class PagamentoPlanoView(APIView):
                     }
                 ],
                 "back_urls": {
-                    # TODO: Alterar para URL do frontend
-                    "success": 'http://localhost:5173/payment/success/',
-                    "failure": 'http://localhost:5173/payment/failure/',
-                    "pending": 'http://localhost:5173/payment/pending/',
+                    "success": 'https://vemagendar.com.br/payment/success/',
+                    "failure": 'https://vemagendar.com.br/payment/failure/',
+                    "pending": 'https://vemagendar.com.br/payment/pending/',
                 },
                 "payer": {
                     "email": user.email,
                 },
                 "external_reference": external_reference,
             }
-
             result = sdk.preference().create(payment_data)
 
             url = result["response"]['init_point']
