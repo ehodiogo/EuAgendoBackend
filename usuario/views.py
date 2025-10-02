@@ -12,6 +12,25 @@ import pytz
 from empresa.serializers import EmpresaSerializer
 from empresa.models import Empresa
 from agendamento.models import Agendamento
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.conf import settings
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
+from django.core.mail import send_mail
+
+EMAIL_REMETENTE = "vemagendar@gmail.com"
+SITE_URL = "https://vemagendar.com.br"
+
+def rodape_padrao():
+    return f"""
+      <hr style="margin-top:30px; border:0; border-top:1px solid #ddd;">
+      <p style="font-size:13px; color:#777; margin-top:15px;">
+        Equipe <b>VemAgendar</b><br>
+        ✉ {EMAIL_REMETENTE}<br>
+        🌐 <a href="{SITE_URL}" style="color:#2c7be5;">{SITE_URL}</a>
+      </p>
+    """
 
 class RegisterView(APIView):
     def post(self, request, *args, **kwargs):
@@ -83,16 +102,46 @@ class PasswordRecoveryView(APIView):
             user = User.objects.get(email=email)
 
             token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            reset_url = f"{SITE_URL}/reset-password/?uid={uid}&token={token}"
 
-            reset_url = f"{settings.FRONTEND_URL}/reset-password/?token={token}"
+            assunto = "🔑 Recuperação de Senha"
+            mensagem_txt = (
+                f"Olá {user.first_name or user.email},\n\n"
+                f"Recebemos uma solicitação para redefinir sua senha.\n"
+                f"Para criar uma nova senha, clique no link abaixo:\n\n"
+                f"{reset_url}\n\n"
+                f"Se você não solicitou a redefinição, apenas ignore este e-mail.\n\n"
+                f"Acesse sua conta: {SITE_URL}\n\n"
+                "Equipe VemAgendar 🚀"
+            )
 
-            subject = "Recuperação de senha"
-            message = f"Para recuperar sua senha, clique no link abaixo:\n{reset_url}"
+            mensagem_html = f"""
+                <html>
+                  <body style="font-family: Arial, sans-serif; color:#333; background:#f9f9f9; padding:20px;">
+                    <div style="max-width:600px; margin:auto; background:#fff; padding:25px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+                      <h2 style="color:#2c7be5;">🔑 Recuperação de Senha</h2>
+                      <p>Olá <b>{user.first_name or user.email}</b>,</p>
+                      <p>Recebemos uma solicitação para redefinir sua senha.</p>
+                      <p>Clique no botão abaixo para criar uma nova senha:</p>
+                      <div style="margin-top:25px; text-align:center;">
+                        <a href="{reset_url}" style="background:#2c7be5; color:#fff; padding:12px 20px; border-radius:6px; text-decoration:none; font-weight:bold;">
+                          🔐 Redefinir Senha
+                        </a>
+                      </div>
+                      <p style="margin-top:20px;">Se você não solicitou a redefinição, apenas ignore este e-mail.</p>
+                      {rodape_padrao()}
+                    </div>
+                  </body>
+                </html>
+                """
+
             send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
+                assunto,
+                mensagem_txt,
+                EMAIL_REMETENTE,
+                [user.email],
+                html_message=mensagem_html,
                 fail_silently=False,
             )
 
@@ -319,3 +368,35 @@ class DashboardView(APIView):
         }
 
         return Response(dados, status=status.HTTP_200_OK)
+
+class ResetPasswordView(APIView):
+    def post(self, request, *args, **kwargs):
+        uidb64 = request.data.get("uid")
+        token = request.data.get("token")
+        new_password = request.data.get("new_password")
+
+        if not uidb64 or not token or not new_password:
+            return Response(
+                {"erro": "Parâmetros uid, token e new_password são obrigatórios."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except Exception as e:
+            return Response({"erro": "UID inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not default_token_generator.check_token(user, token):
+            return Response(
+                {"erro": "Token inválido ou expirado."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response(
+            {"mensagem": "Senha redefinida com sucesso!"},
+            status=status.HTTP_200_OK,
+        )
