@@ -21,21 +21,20 @@ def gerar_link_cancelamento(agendamento):
 
 def rodape_empresa(empresa):
     return f"""
-      <hr style="margin-top:30px; border:0; border-top:1px solid #ddd;">
-      <p style="font-size:13px; color:#777; margin-top:15px;">
-        <b>{empresa.nome if empresa else "Empresa não informada"}</b><br>
-        {empresa.endereco_completo() if empresa else ""}<br>
-        📞 {empresa.telefone if empresa else ""}<br>
-        ✉ {empresa.email if empresa else ""}<br>
-        🌐 <a href="{SITE_URL}" style="color:#2c7be5;">{SITE_URL}</a>
-      </p>
+          <hr style="margin-top:30px; border:0; border-top:1px solid #ddd;">
+          <p style="font-size:13px; color:#777; margin-top:15px;">
+            <b>{empresa.nome if empresa else "Empresa não informada"}</b><br>
+            {empresa.endereco_completo() if empresa else ""}<br>
+            📞 {empresa.telefone if empresa else ""}<br>
+            ✉ {empresa.email if empresa else ""}<br>
+            🌐 <a href="{SITE_URL}" style="color:#2c7be5;">{SITE_URL}</a>
+          </p>
     """
-
 
 @shared_task
 def enviar_email_agendamento(agendamento_id):
     agendamento = Agendamento.objects.get(id=agendamento_id)
-    empresa = agendamento.servico.empresas.first()
+    empresa = agendamento.servico.servicos.first()
 
     assunto = "🎉 Seu agendamento foi confirmado!"
     mensagem_txt = (
@@ -64,6 +63,7 @@ def enviar_email_agendamento(agendamento_id):
               ❌ Cancelar Agendamento
             </a>
           </div>
+          <p style="margin-top:20px; text-align:center;">Aguardamos você com alegria! 🙌</p>
           {rodape_empresa(empresa)}
         </div>
       </body>
@@ -77,7 +77,6 @@ def enviar_email_agendamento(agendamento_id):
         [agendamento.cliente.email],
         html_message=mensagem_html,
     )
-
 
 @shared_task
 def enviar_email_lembrete(agendamento_id, minutos):
@@ -93,6 +92,7 @@ def enviar_email_lembrete(agendamento_id, minutos):
         return
 
     assunto = f"⏰ Lembrete: seu agendamento é em {minutos} minutos"
+
     mensagem_txt = (
         f"Olá {agendamento.cliente},\n\n"
         f"Está chegando a hora! Seu agendamento para *{agendamento.servico}* "
@@ -108,7 +108,7 @@ def enviar_email_lembrete(agendamento_id, minutos):
         <div style="max-width:600px; margin:auto; background:#fff; padding:25px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
           <h2 style="color:#f59f00;">⏰ Está quase na hora!</h2>
           <p>Olá <b>{agendamento.cliente}</b>,</p>
-          <p>Este é um lembrete carinhoso: seu agendamento acontece em <b>{minutos} minutos</b>!</p>
+          <p>Este é um lembrete: seu agendamento acontece em <b>{minutos} minutos</b>!</p>
           <table style="margin-top:15px;">
             <tr><td>📌 <b>Serviço:</b></td><td>{agendamento.servico}</td></tr>
             <tr><td>📅 <b>Data:</b></td><td>{formatar_data_br(agendamento.data)}</td></tr>

@@ -7,7 +7,22 @@ from django.core.mail import send_mail
 from .models import Pagamento, StatusPagamento, TipoPagamento
 from plano.models import PlanoUsuario, Plano
 
-@shared_task(bind=True, max_retries=10)
+EMAIL_REMETENTE = "vemagendar@gmail.com"
+SITE_URL = "https://vemagendar.com.br"
+
+
+def rodape_padrao():
+    return f"""
+      <hr style="margin-top:30px; border:0; border-top:1px solid #ddd;">
+      <p style="font-size:13px; color:#777; margin-top:15px;">
+        Equipe <b>VemAgendar</b><br>
+        ✉ {EMAIL_REMETENTE}<br>
+        🌐 <a href="{SITE_URL}" style="color:#2c7be5;">{SITE_URL}</a>
+      </p>
+    """
+
+
+@shared_task(bind=True, max_retries=20)
 def verificar_pagamento_com_retries(self, pagamento_id):
     try:
         pagamento = Pagamento.objects.get(id=pagamento_id)
@@ -51,40 +66,106 @@ def verificar_pagamento_com_retries(self, pagamento_id):
                     changed_at=timezone.now()
                 )
 
-            user_plan.plan = pagamento.plano
+            user_plan.plano = pagamento.plano
             user_plan.active = True
             user_plan.changed_at = timezone.now()
             user_plan.expira_em = timezone.now() + timedelta(days=30)
             user_plan.save()
 
-            send_mail(
-                "Pagamento Aprovado",
-                f"Olá {user.email}, seu pagamento do plano {pagamento.plano.nome} foi aprovado.",
-                None,
-                [user.email]
+            # Email aprovado
+            assunto = "✅ Pagamento Aprovado!"
+            mensagem_txt = (
+                f"Olá {user.first_name or user.email},\n\n"
+                f"Seu pagamento do plano {pagamento.plano.nome} foi aprovado com sucesso! 🎉\n"
+                f"Agora você já pode aproveitar todos os recursos do seu plano.\n\n"
+                f"Acesse sua conta: {SITE_URL}\n\n"
+                "Equipe VemAgendar 🚀"
             )
+            mensagem_html = f"""
+            <html>
+              <body style="font-family: Arial, sans-serif; color:#333; background:#f9f9f9; padding:20px;">
+                <div style="max-width:600px; margin:auto; background:#fff; padding:25px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+                  <h2 style="color:#28a745;">✅ Pagamento Aprovado</h2>
+                  <p>Olá <b>{user.first_name or user.email}</b>,</p>
+                  <p>Seu pagamento do plano <b>{pagamento.plano.nome}</b> foi aprovado com sucesso! 🎉</p>
+                  <p>Agora você já pode aproveitar todos os recursos do seu plano.</p>
+                  <div style="margin-top:25px; text-align:center;">
+                    <a href="{SITE_URL}" style="background:#2c7be5; color:#fff; padding:12px 20px; border-radius:6px; text-decoration:none; font-weight:bold;">
+                      🚀 Acessar Minha Conta
+                    </a>
+                  </div>
+                  {rodape_padrao()}
+                </div>
+              </body>
+            </html>
+            """
+            send_mail(assunto, mensagem_txt, EMAIL_REMETENTE, [user.email], html_message=mensagem_html)
 
         elif status_mp == "rejected":
             pagamento.status = StatusPagamento.REJEITADO
             pagamento.updated_at = timezone.now()
             pagamento.save()
 
-            # Envia email de rejeição
-            send_mail(
-                "Pagamento Rejeitado",
-                f"Olá {pagamento.usuario.email}, seu pagamento do plano {pagamento.plano.nome} foi rejeitado.",
-                None,
-                [pagamento.usuario.email]
+            # Email rejeitado
+            assunto = "❌ Pagamento Rejeitado"
+            mensagem_txt = (
+                f"Olá {pagamento.usuario.first_name or pagamento.usuario.email},\n\n"
+                f"Infelizmente, seu pagamento do plano {pagamento.plano.nome} foi rejeitado.\n"
+                f"Tente novamente ou utilize outro método de pagamento.\n\n"
+                f"Acesse sua conta: {SITE_URL}\n\n"
+                "Equipe VemAgendar 💙"
             )
+            mensagem_html = f"""
+            <html>
+              <body style="font-family: Arial, sans-serif; color:#333; background:#f9f9f9; padding:20px;">
+                <div style="max-width:600px; margin:auto; background:#fff; padding:25px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+                  <h2 style="color:#dc3545;">❌ Pagamento Rejeitado</h2>
+                  <p>Olá <b>{pagamento.usuario.first_name or pagamento.usuario.email}</b>,</p>
+                  <p>Infelizmente, seu pagamento do plano <b>{pagamento.plano.nome}</b> foi rejeitado.</p>
+                  <p>Tente novamente ou utilize outro método de pagamento.</p>
+                  <div style="margin-top:25px; text-align:center;">
+                    <a href="{SITE_URL}" style="background:#2c7be5; color:#fff; padding:12px 20px; border-radius:6px; text-decoration:none; font-weight:bold;">
+                      💳 Tentar Novamente
+                    </a>
+                  </div>
+                  {rodape_padrao()}
+                </div>
+              </body>
+            </html>
+            """
+            send_mail(assunto, mensagem_txt, EMAIL_REMETENTE, [pagamento.usuario.email], html_message=mensagem_html)
+
         else:
-            raise self.retry(countdown=180)  # 180 segundos = 3 minutos
+            raise self.retry(countdown=90)  # 90 segundos = 1.5 minutos
 
     except self.MaxRetriesExceededError:
-        send_mail(
-            "Pagamento Pendente",
-            f"Olá {pagamento.usuario.email}, seu pagamento do plano {pagamento.plano.nome} não foi aprovado nem rejeitado após várias tentativas. Por favor, verifique no Mercado Pago.",
-            None,
-            [pagamento.usuario.email]
+        assunto = "⏳ Pagamento Pendente"
+        mensagem_txt = (
+            f"Olá {pagamento.usuario.first_name or pagamento.usuario.email},\n\n"
+            f"Seu pagamento do plano {pagamento.plano.nome} ainda não foi aprovado nem rejeitado após várias tentativas.\n"
+            f"Por favor, verifique no Mercado Pago se há alguma pendência.\n\n"
+            f"Acesse sua conta: {SITE_URL}\n\n"
+            "Equipe VemAgendar 💙"
         )
+        mensagem_html = f"""
+        <html>
+          <body style="font-family: Arial, sans-serif; color:#333; background:#f9f9f9; padding:20px;">
+            <div style="max-width:600px; margin:auto; background:#fff; padding:25px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+              <h2 style="color:#f59f00;">⏳ Pagamento Pendente</h2>
+              <p>Olá <b>{pagamento.usuario.first_name or pagamento.usuario.email}</b>,</p>
+              <p>Seu pagamento do plano <b>{pagamento.plano.nome}</b> ainda não foi aprovado nem rejeitado após várias tentativas.</p>
+              <p>Por favor, verifique no Mercado Pago se há alguma pendência.</p>
+              <div style="margin-top:25px; text-align:center;">
+                <a href="{SITE_URL}" style="background:#2c7be5; color:#fff; padding:12px 20px; border-radius:6px; text-decoration:none; font-weight:bold;">
+                  🔍 Verificar Pagamento
+                </a>
+              </div>
+              {rodape_padrao()}
+            </div>
+          </body>
+        </html>
+        """
+        send_mail(assunto, mensagem_txt, EMAIL_REMETENTE, [pagamento.usuario.email], html_message=mensagem_html)
+
     except Exception as e:
-        raise self.retry(exc=e, countdown=180)
+        raise self.retry(exc=e, countdown=90)

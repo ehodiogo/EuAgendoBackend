@@ -168,7 +168,8 @@ class PagamentoPlanoView(APIView):
             url = result["response"]['init_point']
 
             return Response({"url": url}, status=status.HTTP_200_OK)
-
+        except Exception as e:
+            print(e)
         except Plano.DoesNotExist:
             return Response(
                 {"erro": "Plano não encontrado."},
@@ -241,7 +242,7 @@ class PaymentSuccessView(APIView):
                     else:
                         user_plan = user_plan
 
-                    user_plan.plan = transaction.plano
+                    user_plan.plano = transaction.plano
                     user_plan.active = True
                     user_plan.changed_at = datetime.now()
                     user_plan.expira_em = datetime.now() + timedelta(
@@ -327,7 +328,7 @@ class PaymentSuccessView(APIView):
                             else:
                                 user_plan = user_plan
 
-                            user_plan.plan = t.plano
+                            user_plan.plano = t.plano
                             user_plan.active = True
                             user_plan.changed_at = datetime.now()
                             user_plan.expira_em = datetime.now() + timedelta(
