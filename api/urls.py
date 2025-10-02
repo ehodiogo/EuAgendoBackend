@@ -10,6 +10,7 @@ from funcionario.views import FuncionarioCreate, AdicionarFuncionariosEmpresa, R
 from usuario.views import PerfilUsuarioViewSet, RegisterView, LoginView, PasswordRecoveryView, EmpresasUsuarioView
 from usuario.views import UserView, ChangePasswordView, DashboardView, ResetPasswordView
 from pagamento.views import PagamentoPlanoView, LimitePlanoUsageView, PagamentosUsuarioView, PaymentSuccessView, PossuiLimiteView
+from plano.views import PlanoListView
 
 from rest_framework import routers
 from django.urls import path
@@ -61,4 +62,5 @@ urlpatterns += [
     path('editar-funcionario/', EditarFuncionarioView.as_view(), name='editar_funcionario'),
     path('remover-funcionarios-empresa/', RemoverFuncionariosEmpresaView.as_view(), name='remover_funcionarios_empresa'),
     path('reset-password/', ResetPasswordView.as_view(), name='reset_password'),
+    path('planos/', PlanoListView.as_view(), name='planos'),
 ]

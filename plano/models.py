@@ -6,6 +6,9 @@ class Plano(models.Model):
     nome = models.CharField(max_length=255)
     descricao = models.TextField(null=True, blank=True)
     valor = models.FloatField()
+    valor_cheio = models.FloatField()
+    is_promo = models.BooleanField()
+    porcentagem_promo = models.FloatField()
     duracao_em_dias = models.IntegerField()
     quantidade_empresas = models.IntegerField()
     quantidade_funcionarios = models.IntegerField()
@@ -16,6 +19,7 @@ class Plano(models.Model):
     class Meta:
         verbose_name = 'Plano'
         verbose_name_plural = 'Planos'
+        ordering = ['valor_cheio']
 
 class PlanoUsuario(models.Model):
 

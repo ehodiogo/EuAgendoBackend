@@ -133,3 +133,50 @@ def enviar_email_lembrete(agendamento_id, minutos):
         [agendamento.cliente.email],
         html_message=mensagem_html,
     )
+
+@shared_task
+def enviar_email_agendamento_empresa(agendamento_id):
+    agendamento = Agendamento.objects.get(id=agendamento_id)
+    empresa = agendamento.servico.empresas.first()
+
+    if not empresa or not empresa.email:
+        return
+
+    assunto = f"📌 Novo agendamento: {agendamento.servico}"
+    mensagem_txt = (
+        f"Olá {empresa.nome},\n\n"
+        f"Um novo agendamento foi realizado.\n\n"
+        f"Cliente: {agendamento.cliente}\n"
+        f"Serviço: {agendamento.servico}\n"
+        f"Data: {formatar_data_br(agendamento.data)}\n"
+        f"Hora: {formatar_hora_br(agendamento.hora)}\n\n"
+        f"Acesse o sistema para mais detalhes."
+    )
+
+    mensagem_html = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; color: #333; background:#f9f9f9; padding:20px;">
+        <div style="max-width:600px; margin:auto; background:#fff; padding:25px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+          <h2 style="color:#2c7be5;">📌 Novo Agendamento Recebido</h2>
+          <p>Olá <b>{empresa.nome}</b>,</p>
+          <p>Um novo agendamento foi realizado. Aqui estão os detalhes:</p>
+          <table style="margin-top:15px;">
+            <tr><td>👤 <b>Cliente:</b></td><td>{agendamento.cliente}</td></tr>
+            <tr><td>📌 <b>Serviço:</b></td><td>{agendamento.servico}</td></tr>
+            <tr><td>📅 <b>Data:</b></td><td>{formatar_data_br(agendamento.data)}</td></tr>
+            <tr><td>⏰ <b>Hora:</b></td><td>{formatar_hora_br(agendamento.hora)}</td></tr>
+          </table>
+          <p style="margin-top:20px;">Acesse o sistema para mais detalhes.</p>
+          {rodape_empresa(empresa)}
+        </div>
+      </body>
+    </html>
+    """
+
+    send_mail(
+        assunto,
+        mensagem_txt,
+        EMAIL_REMETENTE,
+        [empresa.email],
+        html_message=mensagem_html,
+    )

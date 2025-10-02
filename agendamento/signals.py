@@ -2,7 +2,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Agendamento
-from .tasks import enviar_email_agendamento, enviar_email_lembrete
+from .tasks import enviar_email_agendamento, enviar_email_lembrete, enviar_email_agendamento_empresa
 from datetime import datetime, timedelta
 from django.utils import timezone
 
@@ -10,6 +10,7 @@ from django.utils import timezone
 def agendamento_criado(sender, instance, created, **kwargs):
     if created:
         enviar_email_agendamento.delay(instance.id)
+        enviar_email_agendamento_empresa.delay(instance.id)
 
         hora_agendamento = datetime.combine(instance.data, instance.hora)
         hora_agendamento = timezone.make_aware(hora_agendamento)
