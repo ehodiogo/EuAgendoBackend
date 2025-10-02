@@ -139,7 +139,7 @@ def enviar_email_agendamento_empresa(agendamento_id):
     agendamento = Agendamento.objects.get(id=agendamento_id)
     empresa = agendamento.servico.empresas.first()
 
-    if not empresa or not empresa.email:
+    if not agendamento.servico.criado_por or not agendamento.servico.criado_por.email:
         return
 
     assunto = f"📌 Novo agendamento: {agendamento.servico}"
@@ -177,6 +177,6 @@ def enviar_email_agendamento_empresa(agendamento_id):
         assunto,
         mensagem_txt,
         EMAIL_REMETENTE,
-        [empresa.email],
+        [agendamento.servico.criado_por.email],
         html_message=mensagem_html,
     )
