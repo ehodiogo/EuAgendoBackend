@@ -81,7 +81,7 @@ def enviar_email_agendamento(agendamento_id):
 @shared_task
 def enviar_email_lembrete(agendamento_id, minutos):
     agendamento = Agendamento.objects.get(id=agendamento_id)
-    empresa = agendamento.servico.empresas.first()
+    empresa = agendamento.servico.servicos.first()
 
     agora = timezone.now()
     agendamento_datetime = timezone.make_aware(
@@ -137,7 +137,7 @@ def enviar_email_lembrete(agendamento_id, minutos):
 @shared_task
 def enviar_email_agendamento_empresa(agendamento_id):
     agendamento = Agendamento.objects.get(id=agendamento_id)
-    empresa = agendamento.servico.empresas.first()
+    empresa = agendamento.servico.servicos.first()
 
     if not agendamento.servico.criado_por or not agendamento.servico.criado_por.email:
         return

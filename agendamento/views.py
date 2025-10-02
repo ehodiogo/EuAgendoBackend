@@ -165,3 +165,30 @@ class AgendamentosHojeView(APIView):
             {"erro": "Parâmetro 'empresa_id' é obrigatório."},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+
+class AgendamentoDetailView(APIView):
+    serializer_class = AgendamentoAvaliacaoSerializer
+
+    def get(self, request, identificador, *args, **kwargs):
+        try:
+            agendamento = Agendamento.objects.get(identificador=identificador)
+        except Agendamento.DoesNotExist:
+            return Response({"detail": "Agendamento não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = AgendamentoAvaliacaoSerializer(agendamento)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class AgendamentoCancelarView(APIView):
+
+    def post(self, request, identificador, *args, **kwargs):
+        try:
+            agendamento = Agendamento.objects.get(identificador=identificador)
+        except Agendamento.DoesNotExist:
+            return Response({"detail": "Agendamento não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        agendamento.delete()
+
+        # TODO: enviar email p empres ae p cliente
+        return Response({"detail": "Agendamento cancelado com sucesso."}, status=status.HTTP_200_OK)

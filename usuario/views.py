@@ -42,7 +42,7 @@ class RegisterView(APIView):
             user_plan = PlanoUsuario.objects.filter(usuario=user).first()
 
             if not user_plan:
-                plano, _ = Plano.objects.get_or_create(nome="Free Trial", valor=0, quantidade_empresas=1,
+                plano, _ = Plano.objects.get_or_create(nome="Free Trial", valor=0, quantidade_empresas=1, is_promo=False, valor_cheio=0, porcentagem_promo=0,
                                                        quantidade_funcionarios=1, duracao_em_dias=7)
 
                 PlanoUsuario.objects.create(

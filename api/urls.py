@@ -4,7 +4,7 @@ from servico.views import AdicionarServicoFuncionariosView, AdicionarServicosFun
 from empresa.views import EmpresaViewSet, EmpresaServicoViewSet, FinanceiroView, EmpresaCreate, EditarEmpresaView, RemoverEmpresaView
 from core.views import ImagemViewSet
 from cliente.views import ClienteViewSet
-from agendamento.views import AgendamentoAvaliacaoViewSet, AgendamentoViewSet, AgendamentoCreateView, AgendamentosHojeView
+from agendamento.views import AgendamentoAvaliacaoViewSet, AgendamentoViewSet, AgendamentoCreateView, AgendamentosHojeView, AgendamentoDetailView, AgendamentoCancelarView
 from funcionario.views import FuncionarioViewSet, FuncionarioAgendamentoView, FuncionariosCriadosView, RemoverFuncionarioView, EditarFuncionarioView
 from funcionario.views import FuncionarioCreate, AdicionarFuncionariosEmpresa, RemoverFuncionariosEmpresaView
 from usuario.views import PerfilUsuarioViewSet, RegisterView, LoginView, PasswordRecoveryView, EmpresasUsuarioView
@@ -63,4 +63,6 @@ urlpatterns += [
     path('remover-funcionarios-empresa/', RemoverFuncionariosEmpresaView.as_view(), name='remover_funcionarios_empresa'),
     path('reset-password/', ResetPasswordView.as_view(), name='reset_password'),
     path('planos/', PlanoListView.as_view(), name='planos'),
+    path('agendamento/detalhe/<str:identificador>/', AgendamentoDetailView.as_view(), name='agendamento-detail'),
+    path('agendamento/<str:identificador>/cancelar/', AgendamentoCancelarView.as_view(), name='agendamento-cancelar'),
 ]
