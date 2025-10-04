@@ -1,3 +1,4 @@
+from empresa.models import Empresa
 from locacao.models import Locacao
 from .models import Agendamento
 from .serializers import AgendamentoSerializer, AgendamentoAvaliacaoSerializer
@@ -202,9 +203,16 @@ class AgendamentosHojeView(APIView):
         empresa_id = request.query_params.get("empresa_id")
 
         if empresa_id:
-            agendamentos = Agendamento.objects.filter(data=date.today(), funcionario__empresas__id=empresa_id,
-                                                      is_continuacao=False, hora__gte=datetime.now().time()).order_by(
-                'hora')
+            empresa = Empresa.objects.get(id=empresa_id)
+
+            if empresa.tipo == "Serviço":
+                agendamentos = Agendamento.objects.filter(data=date.today(), funcionario__empresas__id=empresa_id,
+                                                          is_continuacao=False, hora__gte=datetime.now().time()).order_by(
+                    'hora')
+            else:
+                agendamentos = Agendamento.objects.filter(locacao__in=empresa.locacoes.all(), is_continuacao=False, data=date.today(), hora__gte=datetime.now().time()).order_by(
+                    'hora'
+                )
             serializer = AgendamentoSerializer(agendamentos, many=True)
 
             return Response(serializer.data, status=status.HTTP_200_OK)

@@ -66,30 +66,60 @@ class FinanceiroView(APIView):
         primeiro_dia_mes = hoje.replace(day=1)
         primeiro_dia_semana = hoje - timedelta(days=hoje.weekday())
 
-        # Total de ganhos
-        total_ganhos = (
-            Agendamento.objects.filter(funcionario__empresas__id=empresa_id, is_continuacao=False)
-            .aggregate(total=Sum("servico__preco"))
-            .get("total", 0)
-        ) or 0
 
-        # Ganhos por semana
-        ganhos_por_semana = (
-            Agendamento.objects.filter(
-                funcionario__empresas__id=empresa_id, data__gte=primeiro_dia_semana, is_continuacao=False
-            )
-            .aggregate(total=Sum("servico__preco"))
-            .get("total", 0)
-        ) or 0
+        empresa = Empresa.objects.get(id=empresa_id)
 
-        # Ganhos por mês
-        ganhos_por_mes = (
-            Agendamento.objects.filter(
-                funcionario__empresas__id=empresa_id, data__gte=primeiro_dia_mes, is_continuacao=False
-            )
-            .aggregate(total=Sum("servico__preco"))
-            .get("total", 0)
-        ) or 0
+        if empresa.tipo == "Locação":
+            total_ganhos = (
+                               Agendamento.objects.filter(funcionario__empresas__id=empresa_id, is_continuacao=False)
+                               .aggregate(total=Sum("locacao__preco"))
+                               .get("total", 0)
+                           ) or 0
+
+            ganhos_por_semana = (
+                                    Agendamento.objects.filter(
+                                        funcionario__empresas__id=empresa_id,
+                                        data__gte=primeiro_dia_semana,
+                                        is_continuacao=False,
+                                    )
+                                    .aggregate(total=Sum("locacao__preco"))
+                                    .get("total", 0)
+                                ) or 0
+
+            ganhos_por_mes = (
+                                 Agendamento.objects.filter(
+                                     funcionario__empresas__id=empresa_id,
+                                     data__gte=primeiro_dia_mes,
+                                     is_continuacao=False,
+                                 )
+                                 .aggregate(total=Sum("locacao__preco"))
+                                 .get("total", 0)
+                             ) or 0
+        else:
+
+            total_ganhos = (
+                Agendamento.objects.filter(funcionario__empresas__id=empresa_id, is_continuacao=False)
+                .aggregate(total=Sum("servico__preco"))
+                .get("total", 0)
+            ) or 0
+
+            # Ganhos por semana
+            ganhos_por_semana = (
+                Agendamento.objects.filter(
+                    funcionario__empresas__id=empresa_id, data__gte=primeiro_dia_semana, is_continuacao=False
+                )
+                .aggregate(total=Sum("servico__preco"))
+                .get("total", 0)
+            ) or 0
+
+            # Ganhos por mês
+            ganhos_por_mes = (
+                Agendamento.objects.filter(
+                    funcionario__empresas__id=empresa_id, data__gte=primeiro_dia_mes, is_continuacao=False
+                )
+                .aggregate(total=Sum("servico__preco"))
+                .get("total", 0)
+            ) or 0
 
         # Funcionário que mais gerou dinheiro
         funcionario_top = (
@@ -118,8 +148,25 @@ class FinanceiroView(APIView):
             .first()
         )
 
+        locacao_mais_rentavel = (
+            Agendamento.objects.filter(locacao__in=empresa.locacoes.all(), is_continuacao=False)
+            .values("locacao__nome")
+            .annotate(total=Sum("locacao__preco"))
+            .order_by("-total")
+            .first()
+        )
+
+        locacao_menos_rentavel = (
+            Agendamento.objects.filter(locacao__in=empresa.locacoes.all(), is_continuacao=False)
+            .values("locacao__nome")
+            .annotate(total=Sum("locacao__preco"))
+            .order_by("total")
+            .first()
+        )
+
         return Response(
             {
+                "tipo": empresa.tipo,
                 "total_ganhos": total_ganhos,
                 "ganhos_por_semana": ganhos_por_semana,
                 "ganhos_por_mes": ganhos_por_mes,
@@ -129,6 +176,9 @@ class FinanceiroView(APIView):
                 or {"servico__nome": None, "total": 0},
                 "servico_menos_rentavel": servico_menos_rentavel
                 or {"servico__nome": None, "total": 0},
+
+                "locacao_mais_rentavel": locacao_mais_rentavel,
+                "locacao_menos_rentavel": locacao_menos_rentavel,
             },
             status=status.HTTP_200_OK,
         )

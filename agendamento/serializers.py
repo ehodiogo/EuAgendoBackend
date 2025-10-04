@@ -9,6 +9,7 @@ class AgendamentoSerializer(serializers.ModelSerializer):
     funcionario_nome = serializers.SerializerMethodField()
     servico_nome = serializers.SerializerMethodField()
     locacao_nome = serializers.SerializerMethodField()
+    duracao_locacao = serializers.SerializerMethodField()
 
     def get_duracao_servico(self, obj):
         return obj.servico.duracao if obj.servico else None
@@ -24,6 +25,9 @@ class AgendamentoSerializer(serializers.ModelSerializer):
 
     def get_locacao_nome(self, obj):
         return obj.locacao.nome if obj.locacao else None
+
+    def get_duracao_locacao(self, obj):
+        return obj.locacao.duracao if obj.locacao else None
 
     class Meta:
         model = Agendamento

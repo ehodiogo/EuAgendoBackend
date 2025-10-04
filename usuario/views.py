@@ -346,6 +346,8 @@ class DashboardView(APIView):
             .distinct() \
             .count()
 
+        total_locacoes = empresa.locacoes.count()
+
         total_servicos = empresa.servicos.count()
 
         agendamentos_hoje = Agendamento.objects.filter(
@@ -360,9 +362,11 @@ class DashboardView(APIView):
 
         dados = {
             "empresa": empresa.nome,
+            "tipo": empresa.tipo,
             "total_funcionarios": total_funcionarios,
             "total_clientes": total_clientes,
             "total_servicos": total_servicos,
+            "total_locacoes": total_locacoes,
             "agendamentos_hoje": agendamentos_hoje,
             "agendamentos_pendentes": agendamentos_pendentes,
         }
