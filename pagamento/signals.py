@@ -6,5 +6,4 @@ from .tasks import verificar_pagamento_com_retries
 @receiver(post_save, sender=Pagamento)
 def iniciar_verificacao_pagamento(sender, instance, created, **kwargs):
     if created:
-        print("Verificacao pagamento")
         verificar_pagamento_com_retries.delay(instance.id)

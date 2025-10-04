@@ -10,9 +10,10 @@ class Agendamento(models.Model):
         blank=True
     )
 
-    servico = models.ForeignKey('servico.Servico', on_delete=models.CASCADE)
+    servico = models.ForeignKey('servico.Servico', on_delete=models.CASCADE, blank=True, null=True) # pode agendar servico de um funcionario
+    locacao = models.ForeignKey('locacao.Locacao', on_delete=models.CASCADE, blank=True, null=True) # pode agendar uma locacao tipo quadra/vaga/sala
     cliente = models.ForeignKey('cliente.Cliente', on_delete=models.CASCADE)
-    funcionario = models.ForeignKey('funcionario.Funcionario', on_delete=models.CASCADE)
+    funcionario = models.ForeignKey('funcionario.Funcionario', on_delete=models.CASCADE, blank=True, null=True)
     data = models.DateField()
     hora = models.TimeField()
     is_continuacao = models.BooleanField(default=False)
@@ -23,7 +24,10 @@ class Agendamento(models.Model):
     compareceu_agendamento = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'{self.servico} - {self.cliente} - {self.funcionario} - {self.data} - {self.hora}'
+        servico_nome = self.servico.nome if self.servico else ""
+        locacao_nome = self.locacao.nome if self.locacao else ""
+        funcionario_nome = self.funcionario.nome if self.funcionario else ""
+        return f'{servico_nome or locacao_nome} - {self.cliente} - {funcionario_nome} - {self.data} {self.hora}'
 
     def save(self, *args, **kwargs):
         if not self.identificador:

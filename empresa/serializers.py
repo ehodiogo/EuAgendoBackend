@@ -1,3 +1,4 @@
+from locacao.serializers import LocacaoSerializer
 from .models import Empresa
 from rest_framework import serializers
 from funcionario.serializers import ServicoFuncionarioSerializer
@@ -7,6 +8,7 @@ from django.utils import timezone
 class EmpresaSerializer(serializers.ModelSerializer):
     logo = serializers.SerializerMethodField()
     servicos = serializers.SerializerMethodField()
+    locacoes = serializers.SerializerMethodField()
     funcionarios = serializers.SerializerMethodField()
     assinatura_ativa = serializers.SerializerMethodField()
     assinatura_vencimento = serializers.SerializerMethodField()
@@ -67,12 +69,19 @@ class EmpresaSerializer(serializers.ModelSerializer):
             for funcionario in funcionarios
         ]
 
+    def get_locacoes(self, obj):
+        return [
+            {"nome": locacao.nome, "preco": locacao.preco, "duracao": locacao.duracao}
+            for locacao in obj.locacoes.all()
+        ]
+
     class Meta:
         model = Empresa
         fields = (
             "id",
             "nome",
             "cnpj",
+            "tipo",
             "endereco",
             "bairro",
             "cidade",
@@ -82,6 +91,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
             "email",
             "logo",
             "servicos",
+            "locacoes",
             "horario_abertura_dia_semana",
             "horario_fechamento_dia_semana",
             "horario_abertura_fim_de_semana",
@@ -100,7 +110,8 @@ class EmpresaSerializer(serializers.ModelSerializer):
 class EmpresaServicoFuncionarioSerializer(serializers.ModelSerializer):
 
     funcionarios = ServicoFuncionarioSerializer(many=True)
+    locacoes = LocacaoSerializer(many=True)
 
     class Meta:
         model = Empresa
-        fields = ['nome', 'cnpj', 'funcionarios']
+        fields = ['nome', 'cnpj', 'funcionarios', 'locacoes', 'tipo']

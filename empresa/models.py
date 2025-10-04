@@ -4,8 +4,15 @@ from django.contrib.auth.models import User
 
 class Empresa(models.Model):
 
+    TIPO_CHOICES = [
+        ('Serviço', 'Serviço'),
+        ('Locação', 'Locação'),
+    ]
+
     nome = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True, null=True, blank=True, editable=False)
+
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='Serviço')
 
     cnpj = models.CharField(max_length=100)
     endereco = models.CharField(max_length=100)
@@ -19,7 +26,8 @@ class Empresa(models.Model):
 
     logo = models.ForeignKey('core.Imagem', on_delete=models.CASCADE, related_name='logo', null=True, blank=True)
 
-    servicos = models.ManyToManyField('servico.Servico', related_name='servicos')
+    servicos = models.ManyToManyField('servico.Servico', related_name='servicos', blank=True)
+    locacoes = models.ManyToManyField('locacao.Locacao', related_name='empresas', blank=True)
 
     horario_abertura_dia_semana = models.TimeField()
     horario_fechamento_dia_semana = models.TimeField()
@@ -34,7 +42,7 @@ class Empresa(models.Model):
     abre_sabado = models.BooleanField()
     abre_domingo = models.BooleanField()
 
-    funcionarios = models.ManyToManyField('funcionario.Funcionario', related_name='empresas')
+    funcionarios = models.ManyToManyField('funcionario.Funcionario', related_name='empresas', blank=True)
 
     criado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='empresas_criadas')
 

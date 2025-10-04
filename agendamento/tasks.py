@@ -2,6 +2,8 @@ from celery import shared_task
 from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import datetime
+
+from empresa.models import Empresa
 from .models import Agendamento
 
 EMAIL_REMETENTE = "vemagendar@gmail.com"
@@ -34,12 +36,19 @@ def rodape_empresa(empresa):
 @shared_task
 def enviar_email_agendamento(agendamento_id):
     agendamento = Agendamento.objects.get(id=agendamento_id)
-    empresa = agendamento.servico.servicos.first()
+
+    empresa = None
+
+    if agendamento.servico:
+        empresa = Empresa.objects.get(servicos=agendamento.servico)
+
+    if agendamento.locacao:
+        empresa = Empresa.objects.get(locacoes=agendamento.locacao)
 
     assunto = "🎉 Seu agendamento foi confirmado!"
     mensagem_txt = (
         f"Olá {agendamento.cliente},\n\n"
-        f"Temos uma ótima notícia! Seu agendamento para *{agendamento.servico}* foi confirmado.\n\n"
+        f"Temos uma ótima notícia! Seu agendamento para *{agendamento.servico if agendamento.servico else agendamento.locacao}* foi confirmado.\n\n"
         f"📅 Data: {formatar_data_br(agendamento.data)}\n"
         f"⏰ Hora: {formatar_hora_br(agendamento.hora)}\n\n"
         f"Caso precise cancelar, use o link abaixo:\n{gerar_link_cancelamento(agendamento)}\n\n"
@@ -54,7 +63,7 @@ def enviar_email_agendamento(agendamento_id):
           <p>Olá <b>{agendamento.cliente}</b>,</p>
           <p>Seu agendamento foi confirmado com sucesso! Aqui estão os detalhes:</p>
           <table style="margin-top:15px;">
-            <tr><td>📌 <b>Serviço:</b></td><td>{agendamento.servico}</td></tr>
+            <tr><td>📌 <b>Serviço:</b></td><td>{agendamento.servico if agendamento.servico else agendamento.locacao}</td></tr>
             <tr><td>📅 <b>Data:</b></td><td>{formatar_data_br(agendamento.data)}</td></tr>
             <tr><td>⏰ <b>Hora:</b></td><td>{formatar_hora_br(agendamento.hora)}</td></tr>
           </table>
@@ -81,7 +90,12 @@ def enviar_email_agendamento(agendamento_id):
 @shared_task
 def enviar_email_lembrete(agendamento_id, minutos):
     agendamento = Agendamento.objects.get(id=agendamento_id)
-    empresa = agendamento.servico.servicos.first()
+    empresa = None
+    if agendamento.servico:
+        empresa = Empresa.objects.get(servicos=agendamento.servico)
+
+    if agendamento.locacao:
+        empresa = Empresa.objects.get(locacoes=agendamento.locacao)
 
     agora = timezone.now()
     agendamento_datetime = timezone.make_aware(
@@ -95,7 +109,7 @@ def enviar_email_lembrete(agendamento_id, minutos):
 
     mensagem_txt = (
         f"Olá {agendamento.cliente},\n\n"
-        f"Está chegando a hora! Seu agendamento para *{agendamento.servico}* "
+        f"Está chegando a hora! Seu agendamento para *{agendamento.servico if agendamento.servico else agendamento.locacao}*\n* "
         f"acontece em {minutos} minutos.\n\n"
         f"📅 {formatar_data_br(agendamento.data)} - ⏰ {formatar_hora_br(agendamento.hora)}\n\n"
         f"Estamos te esperando! 🚀\n\n"
@@ -110,7 +124,7 @@ def enviar_email_lembrete(agendamento_id, minutos):
           <p>Olá <b>{agendamento.cliente}</b>,</p>
           <p>Este é um lembrete: seu agendamento acontece em <b>{minutos} minutos</b>!</p>
           <table style="margin-top:15px;">
-            <tr><td>📌 <b>Serviço:</b></td><td>{agendamento.servico}</td></tr>
+            <tr><td>📌 <b>Serviço:</b></td><td>{agendamento.servico if agendamento.servico else agendamento.locacao}</td></tr>
             <tr><td>📅 <b>Data:</b></td><td>{formatar_data_br(agendamento.data)}</td></tr>
             <tr><td>⏰ <b>Hora:</b></td><td>{formatar_hora_br(agendamento.hora)}</td></tr>
           </table>
@@ -137,12 +151,18 @@ def enviar_email_lembrete(agendamento_id, minutos):
 @shared_task
 def enviar_email_agendamento_empresa(agendamento_id):
     agendamento = Agendamento.objects.get(id=agendamento_id)
-    empresa = agendamento.servico.servicos.first()
+    empresa = None
 
-    if not agendamento.servico.criado_por or not agendamento.servico.criado_por.email:
+    if agendamento.servico:
+        empresa = Empresa.objects.get(servicos=agendamento.servico)
+
+    if agendamento.locacao:
+        empresa = Empresa.objects.get(locacoes=agendamento.locacao)
+
+    if not empresa.email:
         return
 
-    assunto = f"📌 Novo agendamento: {agendamento.servico}"
+    assunto = f"📌 Novo agendamento: {agendamento.servico if agendamento.servico else agendamento.locacao}"
     mensagem_txt = (
         f"Olá {empresa.nome},\n\n"
         f"Um novo agendamento foi realizado.\n\n"
@@ -162,7 +182,7 @@ def enviar_email_agendamento_empresa(agendamento_id):
           <p>Um novo agendamento foi realizado. Aqui estão os detalhes:</p>
           <table style="margin-top:15px;">
             <tr><td>👤 <b>Cliente:</b></td><td>{agendamento.cliente}</td></tr>
-            <tr><td>📌 <b>Serviço:</b></td><td>{agendamento.servico}</td></tr>
+            <tr><td>📌 <b>Serviço:</b></td><td>{agendamento.servico if agendamento.servico else agendamento.locacao}</td></tr>
             <tr><td>📅 <b>Data:</b></td><td>{formatar_data_br(agendamento.data)}</td></tr>
             <tr><td>⏰ <b>Hora:</b></td><td>{formatar_hora_br(agendamento.hora)}</td></tr>
           </table>
@@ -177,6 +197,6 @@ def enviar_email_agendamento_empresa(agendamento_id):
         assunto,
         mensagem_txt,
         EMAIL_REMETENTE,
-        [agendamento.servico.criado_por.email],
+        [empresa.email],
         html_message=mensagem_html,
     )

@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     "empresa",
     "cliente",
     "servico",
+    "locacao",
     "funcionario",
     "core",
     "api",

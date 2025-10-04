@@ -47,9 +47,16 @@ class LimitePlanoUsageView(APIView):
                 "quantia_empresas_criadas": empresas.count(),
                 "limite_empresas": plano.plano.quantidade_empresas,
                 "limite_funcionarios": plano.plano.quantidade_funcionarios,
+                "limite_locacoes": plano.plano.quantidade_locacoes,
                 "funcionarios_por_empresa": [
                     {"empresa": empresa.nome, "total_funcionarios": empresa.funcionarios.count()}
                     for empresa in empresas
+                    if empresa.tipo == "Serviço"
+                ],
+                "locacoes_por_empresa": [
+                    {"empresa": empresa.nome, "total_locativos": empresa.locacoes.count()}
+                    for empresa in empresas
+                    if empresa.tipo == "Locação"
                 ]
             },
             status=status.HTTP_200_OK,
@@ -180,8 +187,6 @@ class PagamentoPlanoView(APIView):
 class PaymentSuccessView(APIView):
     def post(self, request, *args, **kwargs):
 
-        print("Post payment success", request.data)
-
         plano_nome = request.data.get("plano_nome")
         usuario_token = request.data.get("usuario_token")
 
@@ -271,7 +276,6 @@ class PaymentSuccessView(APIView):
                 )
 
         else:
-            print("Sem plano nome")
 
             try:
                 from pagamento.models import StatusPagamento
@@ -279,8 +283,6 @@ class PaymentSuccessView(APIView):
                 user = Token.objects.filter(key=usuario_token).first().user
 
                 transaction = Pagamento.objects.filter(verified=False, usuario=user, status=StatusPagamento.PENDENTE)
-
-                print("Transacao ", transaction)
 
                 for t in transaction:
                     hash_id = t.hash_mercadopago
@@ -292,13 +294,9 @@ class PaymentSuccessView(APIView):
 
                     payment = sdk.payment().search({"external_reference": hash_id})
 
-                    print("Payment", payment)
-
                     try:
 
                         if payment["response"]["results"][0]["status"] == "approved":
-
-                            print("Aprovado")
 
                             payment_method = payment["response"]["results"][0]["payment_method_id"]
 
@@ -340,7 +338,6 @@ class PaymentSuccessView(APIView):
                                 {"message": "Payment approved. You are now subscribed"},
                                 status=status.HTTP_200_OK,
                             )
-                        print("Não aprovado")
                     except Exception as e:
                         print(e)
 

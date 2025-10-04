@@ -12,6 +12,7 @@ class Plano(models.Model):
     duracao_em_dias = models.IntegerField()
     quantidade_empresas = models.IntegerField()
     quantidade_funcionarios = models.IntegerField()
+    quantidade_locacoes = models.IntegerField()
 
     def __str__(self):
         return self.nome

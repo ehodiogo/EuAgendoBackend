@@ -10,6 +10,7 @@ from funcionario.views import FuncionarioCreate, AdicionarFuncionariosEmpresa, R
 from usuario.views import PerfilUsuarioViewSet, RegisterView, LoginView, PasswordRecoveryView, EmpresasUsuarioView
 from usuario.views import UserView, ChangePasswordView, DashboardView, ResetPasswordView
 from pagamento.views import PagamentoPlanoView, LimitePlanoUsageView, PagamentosUsuarioView, PaymentSuccessView, PossuiLimiteView
+from locacao.views import LocacoesCriadasUsuarioEmpresaView, CadastrarLocacaoView, RemoverLocacaoView, EditarLocacaoView, LocacaoAgendamentoView
 from plano.views import PlanoListView
 
 from rest_framework import routers
@@ -30,6 +31,7 @@ urlpatterns = router.urls
 urlpatterns += [
     path('agendamento/create', AgendamentoCreateView.as_view(), name='agendamento-create'),
     path('agendamentos_funcionario/', FuncionarioAgendamentoView.as_view(), name='agendamentos_funcionario'),
+    path('agendamentos_locacao/', LocacaoAgendamentoView.as_view(), name='agendamentos_locacao'),
     path('login/', LoginView.as_view(), name='login'),
     path('register/', RegisterView.as_view(), name='register'),
     path('password-recovery/', PasswordRecoveryView.as_view(), name='password_recovery'),
@@ -65,4 +67,8 @@ urlpatterns += [
     path('planos/', PlanoListView.as_view(), name='planos'),
     path('agendamento/detalhe/<str:identificador>/', AgendamentoDetailView.as_view(), name='agendamento-detail'),
     path('agendamento/<str:identificador>/cancelar/', AgendamentoCancelarView.as_view(), name='agendamento-cancelar'),
+    path('locacoes-criadas-usuario-empresa/', LocacoesCriadasUsuarioEmpresaView.as_view(), name='locacoes_criadas_usuario_empresa'),
+    path('cadastrar-locacao/', CadastrarLocacaoView.as_view(), name='cadastrar_locacao'),
+    path('remover-locacao/', RemoverLocacaoView.as_view(), name='remover_locacao'),
+    path('editar-locacao/', EditarLocacaoView.as_view(), name='editar_locacao'),
 ]

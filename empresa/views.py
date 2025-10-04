@@ -141,6 +141,7 @@ class EmpresaCreate(APIView):
 
         nome = request.data.get("nome")
         cnpj = request.data.get("cnpj")
+        tipo = request.data.get("tipo")
         endereco = request.data.get("endereco")
         bairro = request.data.get("bairro")
         cidade = request.data.get("cidade")
@@ -181,7 +182,7 @@ class EmpresaCreate(APIView):
 
         logo = request.data.get("logo")
 
-        if not nome or not cnpj or not endereco or not telefone or not email:
+        if not nome or not cnpj or not endereco or not telefone or not email or not tipo:
             return Response(
                 {"erro": "Todos os campos são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST
             )
@@ -214,6 +215,7 @@ class EmpresaCreate(APIView):
             empresa = Empresa.objects.create(
                 nome=nome,
                 cnpj=cnpj,
+                tipo=tipo,
                 endereco=endereco,
                 bairro=bairro,
                 cidade=cidade,
@@ -259,6 +261,7 @@ class EditarEmpresaView(APIView):
 
         nome = request.data.get("nome")
         cnpj = request.data.get("cnpj")
+        tipo = request.data.get("tipo")
         endereco = request.data.get("endereco")
         bairro = request.data.get("bairro")
         cidade = request.data.get("cidade")
@@ -301,7 +304,7 @@ class EditarEmpresaView(APIView):
 
         empresa_id = request.data.get("empresa_id")
 
-        if not nome or not cnpj or not endereco or not telefone or not email or not empresa_id:
+        if not nome or not cnpj or not endereco or not telefone or not email or not empresa_id or not tipo:
 
             return Response(
                 {"erro": "Todos os campos são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST
@@ -346,6 +349,9 @@ class EditarEmpresaView(APIView):
 
             if cnpj != empresa.cnpj and cnpj != None:
                 empresa.cnpj = cnpj
+
+            if tipo != empresa.tipo and tipo != None:
+                empresa.tipo = tipo
 
             if endereco != empresa.endereco and endereco != None:
                 empresa.endereco = endereco
