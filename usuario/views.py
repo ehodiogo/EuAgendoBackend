@@ -34,32 +34,36 @@ def rodape_padrao():
 
 class RegisterView(APIView):
     def post(self, request, *args, **kwargs):
-        serializer = RegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            refresh = RefreshToken.for_user(user)
+        try:
+            serializer = RegisterSerializer(data=request.data)
+            if serializer.is_valid():
+                user = serializer.save()
+                refresh = RefreshToken.for_user(user)
 
-            user_plan = PlanoUsuario.objects.filter(usuario=user).first()
+                user_plan = PlanoUsuario.objects.filter(usuario=user).first()
 
-            if not user_plan:
-                plano, _ = Plano.objects.get_or_create(nome="Free Trial", valor=0, quantidade_empresas=1, is_promo=False, valor_cheio=0, porcentagem_promo=0,
-                                                       quantidade_funcionarios=1, duracao_em_dias=7)
+                if not user_plan:
+                    plano, _ = Plano.objects.get_or_create(nome="Free Trial", valor=0, quantidade_empresas=1, is_promo=False, valor_cheio=0, porcentagem_promo=0,
+                                                           quantidade_funcionarios=1, duracao_em_dias=7)
 
-                PlanoUsuario.objects.create(
-                    usuario=user, plano=plano, expira_em=datetime.now() + timedelta(days=7)
+                    PlanoUsuario.objects.create(
+                        usuario=user, plano=plano, expira_em=datetime.now() + timedelta(days=7)
+                    )
+
+                    user_plan = PlanoUsuario.objects.filter(usuario=user)
+
+                return Response(
+                    {
+                        "refresh": str(refresh),
+                        "access": str(refresh.access_token),
+                        "username": user.username,
+                    },
+                    status=status.HTTP_201_CREATED,
                 )
-
-                user_plan = PlanoUsuario.objects.filter(usuario=user)
-
-            return Response(
-                {
-                    "refresh": str(refresh),
-                    "access": str(refresh.access_token),
-                    "username": user.username,
-                },
-                status=status.HTTP_201_CREATED,
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(e)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
     def post(self, request, *args, **kwargs):
