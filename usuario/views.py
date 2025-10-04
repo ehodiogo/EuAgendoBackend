@@ -44,7 +44,7 @@ class RegisterView(APIView):
 
                 if not user_plan:
                     plano, _ = Plano.objects.get_or_create(nome="Free Trial", valor=0, quantidade_empresas=1, is_promo=False, valor_cheio=0, porcentagem_promo=0,
-                                                           quantidade_funcionarios=1, duracao_em_dias=7)
+                                                           quantidade_funcionarios=1, duracao_em_dias=7, quantidade_locacoes=1)
 
                     PlanoUsuario.objects.create(
                         usuario=user, plano=plano, expira_em=datetime.now() + timedelta(days=7)
