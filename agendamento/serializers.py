@@ -43,13 +43,16 @@ class AgendamentoAvaliacaoSerializer(serializers.ModelSerializer):
     funcionario = FuncionarioSerializer()
 
     def get_duracao_servico(self, obj):
-        return obj.servico.duracao
+        return obj.servico.duracao if obj.servico else None
 
     def get_servico_nome(self, obj):
-        return obj.servico.nome
+        return obj.servico.nome if obj.servico else None
 
     def get_cliente_nome(self, obj):
         return obj.cliente.nome
+
+    def get_locacao_nome(self, obj):
+        return obj.locacao.nome if obj.locacao else None
 
     class Meta:
         model = Agendamento
