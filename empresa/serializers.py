@@ -4,6 +4,8 @@ from rest_framework import serializers
 from funcionario.serializers import ServicoFuncionarioSerializer
 from plano.models import PlanoUsuario
 from django.utils import timezone
+from agendamento.models import Agendamento
+from django.db.models import Avg
 
 class EmpresaSerializer(serializers.ModelSerializer):
     logo = serializers.SerializerMethodField()
@@ -12,6 +14,8 @@ class EmpresaSerializer(serializers.ModelSerializer):
     funcionarios = serializers.SerializerMethodField()
     assinatura_ativa = serializers.SerializerMethodField()
     assinatura_vencimento = serializers.SerializerMethodField()
+    avaliacoes_empresa = serializers.SerializerMethodField()
+    nota_empresa = serializers.SerializerMethodField()
 
     def get_assinatura_ativa(self, obj):
 
@@ -75,6 +79,32 @@ class EmpresaSerializer(serializers.ModelSerializer):
             for locacao in obj.locacoes.all()
         ]
 
+    def get_avaliacoes_empresa(self, obj):
+        if obj.tipo == 'Serviço':
+            return Agendamento.objects.filter(funcionario__empresas__id=obj.id, is_continuacao=False, nota_avaliacao__isnull=False).count()
+        else:
+            return Agendamento.objects.filter(locacao__in=obj.locacoes.all(), is_continuacao=False, nota_avaliacao__isnull=False).count()
+
+
+    def get_nota_empresa(self, obj):
+        if obj.tipo == 'Serviço':
+            resultado = Agendamento.objects.filter(
+                funcionario__empresas__id=obj.id,
+                is_continuacao=False,
+                nota_avaliacao__isnull=False
+            ).aggregate(media=Avg('nota_avaliacao'))
+
+            return resultado['media'] or 0
+        else:
+            resultado = Agendamento.objects.filter(
+                locacao__in=obj.locacoes.all(),
+                is_continuacao=False,
+                nota_avaliacao__isnull=False
+            ).aggregate(media=Avg('nota_avaliacao'))
+
+            return resultado['media'] or 0
+
+
     class Meta:
         model = Empresa
         fields = (
@@ -104,6 +134,8 @@ class EmpresaSerializer(serializers.ModelSerializer):
             "funcionarios",
             "assinatura_ativa",
             "assinatura_vencimento",
+            'nota_empresa',
+            'avaliacoes_empresa',
         )
 
 

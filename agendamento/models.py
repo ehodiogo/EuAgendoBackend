@@ -18,7 +18,7 @@ class Agendamento(models.Model):
     hora = models.TimeField()
     is_continuacao = models.BooleanField(default=False)
 
-    nota_avaliacao = models.IntegerField(default=0)
+    nota_avaliacao = models.IntegerField(null=True, blank=True)
     descricao_avaliacao = models.TextField(default="")
 
     compareceu_agendamento = models.BooleanField(default=False)
