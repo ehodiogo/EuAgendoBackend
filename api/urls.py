@@ -8,7 +8,7 @@ from agendamento.views import AgendamentoAvaliacaoViewSet, AgendamentoViewSet, A
 from funcionario.views import FuncionarioViewSet, FuncionarioAgendamentoView, FuncionariosCriadosView, RemoverFuncionarioView, EditarFuncionarioView
 from funcionario.views import FuncionarioCreate, AdicionarFuncionariosEmpresa, RemoverFuncionariosEmpresaView
 from usuario.views import PerfilUsuarioViewSet, RegisterView, LoginView, PasswordRecoveryView, EmpresasUsuarioView
-from usuario.views import UserView, ChangePasswordView, DashboardView, ResetPasswordView
+from usuario.views import UserView, ChangePasswordView, DashboardView, ResetPasswordView, ConfirmEmailView
 from pagamento.views import PagamentoPlanoView, LimitePlanoUsageView, PagamentosUsuarioView, PaymentSuccessView, PossuiLimiteView
 from locacao.views import LocacoesCriadasUsuarioEmpresaView, CadastrarLocacaoView, RemoverLocacaoView, EditarLocacaoView, LocacaoAgendamentoView
 from plano.views import PlanoListView
@@ -71,4 +71,5 @@ urlpatterns += [
     path('cadastrar-locacao/', CadastrarLocacaoView.as_view(), name='cadastrar_locacao'),
     path('remover-locacao/', RemoverLocacaoView.as_view(), name='remover_locacao'),
     path('editar-locacao/', EditarLocacaoView.as_view(), name='editar_locacao'),
+    path('confirmar-conta/', ConfirmEmailView.as_view(), name='confirmar-conta'),
 ]

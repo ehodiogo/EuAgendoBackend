@@ -18,6 +18,8 @@ from django.conf import settings
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
+from usuario.tasks import enviar_email_confirmacao_cadastro
+from django.http import HttpResponseRedirect
 
 EMAIL_REMETENTE = "vemagendar@gmail.com"
 SITE_URL = "https://vemagendar.com.br"
@@ -38,9 +40,13 @@ class RegisterView(APIView):
             serializer = RegisterSerializer(data=request.data)
             if serializer.is_valid():
                 user = serializer.save()
+                user.is_active = False
+                user.save()
                 refresh = RefreshToken.for_user(user)
 
                 user_plan = PlanoUsuario.objects.filter(usuario=user).first()
+
+                enviar_email_confirmacao_cadastro.delay(user.id)
 
                 if not user_plan:
                     plano, _ = Plano.objects.get_or_create(nome="Free Trial", valor=0, quantidade_empresas=1, is_promo=False, valor_cheio=0, porcentagem_promo=0,
@@ -53,11 +59,7 @@ class RegisterView(APIView):
                     user_plan = PlanoUsuario.objects.filter(usuario=user)
 
                 return Response(
-                    {
-                        "refresh": str(refresh),
-                        "access": str(refresh.access_token),
-                        "username": user.username,
-                    },
+                    {"mensagem": "Usuário criado com sucesso! Verifique seu e-mail para confirmar o cadastro."},
                     status=status.HTTP_201_CREATED,
                 )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -70,6 +72,12 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data["user"]
+
+            if not user.is_active:
+                return Response(
+                    {"erro": "Conta ainda não confirmada. Verifique seu e-mail."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
             refresh = RefreshToken.for_user(user)
 
@@ -408,3 +416,22 @@ class ResetPasswordView(APIView):
             {"mensagem": "Senha redefinida com sucesso!"},
             status=status.HTTP_200_OK,
         )
+
+class ConfirmEmailView(APIView):
+    def get(self, request, *args, **kwargs):
+        uidb64 = request.query_params.get("uid")
+        token = request.query_params.get("token")
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except Exception:
+            return Response({"erro": "UID inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not default_token_generator.check_token(user, token):
+            return Response({"erro": "Token inválido ou expirado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.is_active = True
+        user.save()
+
+        return HttpResponseRedirect("https://vemagendar.com.br/login/")
