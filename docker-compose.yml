@@ -10,6 +10,7 @@ services:
     volumes:
       - .:/app
       - static_volume:/app/backend/staticfiles
+      - ./BACKUPS:/app/../BACKUPS
     ports:
       - "${DJANGO_PORT}:8000"
     env_file:
