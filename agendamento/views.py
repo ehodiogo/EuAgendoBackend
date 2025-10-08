@@ -60,6 +60,7 @@ class AgendamentoCreateView(APIView):
         cliente_numero = request.data.get("cliente_numero")
         servico_nome = request.data.get("servico_nome")
         duracao_minima = request.data.get("duracao_minima")
+        descricao = request.data.get("descricao")
 
         if id_funcionario and not servico_nome:
             return Response(
@@ -124,6 +125,7 @@ class AgendamentoCreateView(APIView):
                     hora=data_hora.time(),
                     cliente=cliente,
                     servico=servico,
+                    observacao=descricao
                 )
 
                 for i in range(1, quantia_agendamentos):
@@ -137,6 +139,7 @@ class AgendamentoCreateView(APIView):
                         cliente=cliente,
                         servico=servico,
                         is_continuacao=True,
+                        observacao=descricao
                     )
             else:
 
@@ -146,6 +149,7 @@ class AgendamentoCreateView(APIView):
                     hora=data_hora.time(),
                     cliente=cliente,
                     servico=servico,
+                    observacao=descricao
                 )
 
         if locacao:
@@ -158,6 +162,7 @@ class AgendamentoCreateView(APIView):
                     hora=data_hora.time(),
                     cliente=cliente,
                     locacao=locacao,
+                    observacao=descricao
                 )
 
                 for i in range(1, quantia_agendamentos):
@@ -171,6 +176,7 @@ class AgendamentoCreateView(APIView):
                         cliente=cliente,
                         locacao=locacao,
                         is_continuacao=True,
+                        observacao=descricao
                     )
             else:
 
@@ -179,6 +185,7 @@ class AgendamentoCreateView(APIView):
                     hora=data_hora.time(),
                     cliente=cliente,
                     locacao=locacao,
+                    observacao=descricao
                 )
 
         return Response(

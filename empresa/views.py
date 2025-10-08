@@ -46,9 +46,9 @@ class EmpresaServicoViewSet(viewsets.ModelViewSet):
         cnpj = self.request.query_params.get("cnpj", None)
 
         if nome:
-            return Empresa.objects.filter(nome__icontains=nome)
+            return Empresa.objects.filter(nome_=nome)
         elif cnpj:
-            return Empresa.objects.filter(cnpj__icontains=cnpj)
+            return Empresa.objects.filter(cnpj=cnpj)
         else:
             return Empresa.objects.all()
 

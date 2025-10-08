@@ -58,6 +58,7 @@ class AgendamentoAvaliacaoSerializer(serializers.ModelSerializer):
         model = Agendamento
         fields = [
             'id',
+            'observacao',
             'duracao_servico',
             'servico_nome',
             'cliente_nome',

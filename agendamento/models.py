@@ -9,7 +9,7 @@ class Agendamento(models.Model):
         editable=False,
         blank=True
     )
-
+    observacao = models.TextField(blank=True, null=True)
     servico = models.ForeignKey('servico.Servico', on_delete=models.CASCADE, blank=True, null=True) # pode agendar servico de um funcionario
     locacao = models.ForeignKey('locacao.Locacao', on_delete=models.CASCADE, blank=True, null=True) # pode agendar uma locacao tipo quadra/vaga/sala
     cliente = models.ForeignKey('cliente.Cliente', on_delete=models.CASCADE)

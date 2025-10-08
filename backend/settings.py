@@ -30,6 +30,10 @@ SECRET_KEY = 'django-insecure-njpai4x6mrb3_6bp_9bb$3bun7m%!zzd*j!ng&8)z8ivphfx!!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 RAILWAY_DEPLOYED = os.getenv("RAILWAY_DEPLOYED", "False") == "True"
 
+print("IS DEBUG?", DEBUG)
+if not DEBUG and RAILWAY_DEPLOYED:
+    print("PRD MERCADO PAGO", config("MERCADO_PAGO_ACCESS_TOKEN_PRD"))
+
 ALLOWED_HOSTS = [
     "localhost",
     "backend.localhost",
