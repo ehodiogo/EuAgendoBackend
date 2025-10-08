@@ -19,7 +19,7 @@ class Agendamento(models.Model):
     is_continuacao = models.BooleanField(default=False)
 
     nota_avaliacao = models.IntegerField(null=True, blank=True)
-    descricao_avaliacao = models.TextField(default="")
+    descricao_avaliacao = models.TextField(default="", blank=True, null=True)
 
     compareceu_agendamento = models.BooleanField(default=False)
 
