@@ -2,13 +2,11 @@ services:
   web:
     build: .
     container_name: django_app
-#    command: >
-#      sh -c "python manage.py makemigrations &&
-#             python manage.py migrate &&
-#             python manage.py collectstatic --noinput &&
-#             gunicorn backend.wsgi:application --bind 0.0.0.0:${DJANGO_PORT} --workers 3"
     command: >
-        sh -c "python manage.py runserver 0.0.0.0:${DJANGO_PORT}"
+      sh -c "python manage.py makemigrations &&
+             python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn backend.wsgi:application --bind 0.0.0.0:${DJANGO_PORT} --workers 3"
     volumes:
       - .:/app
       - static_volume:/app/backend/staticfiles
