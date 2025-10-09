@@ -12,7 +12,7 @@ app.autodiscover_tasks()
 
 app.conf.beat_schedule = {
     'backup-banco-daily': {
-        'task': 'api.tasks.backup_postgres_to_drive',
+        'task': 'api.tasks.backup_postgres_local',
         'schedule': crontab(hour=2, minute=0),  # todo dia às 2h da manhã
     },
 }
