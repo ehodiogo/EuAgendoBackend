@@ -30,13 +30,14 @@ def gerar_nota_pdf_profissional(pagamento):
       <head>
         <style>
           body {{ font-family: Arial, sans-serif; color: #333; }}
-          .container {{ width: 100%; max-width: 700px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }}
-          .header {{ text-align: center; margin-bottom: 30px; }}
+          .container {{ width: 700px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }}
+          .header {{ text-align: center; margin-bottom: 20px; }}
           .header img {{ width: 180px; }}
-          .title {{ text-align: center; color: #2c7be5; font-size: 24px; margin-bottom: 20px; }}
-          table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; }}
-          th, td {{ padding: 10px; border: 1px solid #ddd; text-align: left; }}
-          .footer {{ text-align: center; font-size: 12px; color: #777; margin-top: 30px; }}
+          .title {{ text-align: center; color: #2c7be5; font-size: 22px; margin-bottom: 20px; }}
+          table {{ width: 100%; border-collapse: collapse; }}
+          th, td {{ padding: 8px 10px; border: 1px solid #ddd; text-align: left; }}
+          th {{ background-color: #f2f2f2; }}
+          .footer {{ text-align: center; font-size: 12px; color: #777; margin-top: 20px; }}
         </style>
       </head>
       <body>
@@ -55,10 +56,10 @@ def gerar_nota_pdf_profissional(pagamento):
             <tr><th>Status</th><td>{pagamento.status}</td></tr>
           </table>
 
-          <div class="footer">
+          <p class="footer">
             Esta nota fiscal é gerada automaticamente pelo sistema <b>VemAgendar</b>.<br>
             🌐 <a href="{SITE_URL}">{SITE_URL}</a>
-          </div>
+          </p>
         </div>
       </body>
     </html>
