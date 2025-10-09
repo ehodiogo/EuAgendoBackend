@@ -3,13 +3,14 @@ from decouple import config
 import mercadopago
 from datetime import timedelta
 from django.utils import timezone
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage, send_mail
 from .models import Pagamento, StatusPagamento, TipoPagamento
 from plano.models import PlanoUsuario, Plano
+from io import BytesIO
+from xhtml2pdf import pisa
 
 EMAIL_REMETENTE = "vemagendar@gmail.com"
 SITE_URL = "https://vemagendar.com.br"
-
 
 def rodape_padrao():
     return f"""
@@ -21,6 +22,51 @@ def rodape_padrao():
       </p>
     """
 
+def gerar_nota_pdf_profissional(pagamento):
+    logo_url = "https://eu-agendo.s3.us-east-1.amazonaws.com/imagens/logo_VemAgendar_vemagendargmail.com.png"
+
+    html = f"""
+    <html>
+      <head>
+        <style>
+          body {{ font-family: Arial, sans-serif; color: #333; }}
+          .container {{ width: 100%; max-width: 700px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }}
+          .header {{ text-align: center; margin-bottom: 30px; }}
+          .header img {{ width: 180px; }}
+          .title {{ text-align: center; color: #2c7be5; font-size: 24px; margin-bottom: 20px; }}
+          table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; }}
+          th, td {{ padding: 10px; border: 1px solid #ddd; text-align: left; }}
+          .footer {{ text-align: center; font-size: 12px; color: #777; margin-top: 30px; }}
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <img src="{logo_url}" alt="VemAgendar Logo"/>
+          </div>
+          <div class="title">Nota Fiscal de Pagamento</div>
+
+          <table>
+            <tr><th>Usuário</th><td>{pagamento.usuario.first_name or pagamento.usuario.email}</td></tr>
+            <tr><th>Plano</th><td>{pagamento.plano.nome}</td></tr>
+            <tr><th>Valor</th><td>R$ {pagamento.valor:.2f}</td></tr>
+            <tr><th>Data do Pagamento</th><td>{pagamento.updated_at.strftime('%d/%m/%Y %H:%M')}</td></tr>
+            <tr><th>Método de Pagamento</th><td>{pagamento.tipo}</td></tr>
+            <tr><th>Status</th><td>{pagamento.status}</td></tr>
+          </table>
+
+          <div class="footer">
+            Esta nota fiscal é gerada automaticamente pelo sistema <b>VemAgendar</b>.<br>
+            🌐 <a href="{SITE_URL}">{SITE_URL}</a>
+          </div>
+        </div>
+      </body>
+    </html>
+    """
+    pdf_file = BytesIO()
+    pisa.CreatePDF(html, dest=pdf_file)
+    pdf_file.seek(0)
+    return pdf_file
 
 @shared_task(bind=True, max_retries=20)
 def verificar_pagamento_com_retries(self, pagamento_id):
@@ -72,8 +118,11 @@ def verificar_pagamento_com_retries(self, pagamento_id):
             user_plan.expira_em = timezone.now() + timedelta(days=30)
             user_plan.save()
 
-            # Email aprovado
-            assunto = "✅ Pagamento Aprovado!"
+            # Gerar PDF de nota fiscal
+            pdf = gerar_nota_pdf_profissional(pagamento)
+
+            # Enviar e-mail com PDF anexado
+            assunto = "✅ Pagamento Aprovado e Nota Fiscal"
             mensagem_txt = (
                 f"Olá {user.first_name or user.email},\n\n"
                 f"Seu pagamento do plano {pagamento.plano.nome} foi aprovado com sucesso! 🎉\n"
@@ -99,7 +148,15 @@ def verificar_pagamento_com_retries(self, pagamento_id):
               </body>
             </html>
             """
-            send_mail(assunto, mensagem_txt, EMAIL_REMETENTE, [user.email], html_message=mensagem_html)
+            email = EmailMessage(
+                subject=assunto,
+                body=mensagem_html,
+                from_email=EMAIL_REMETENTE,
+                to=[user.email],
+            )
+            email.content_subtype = "html"
+            email.attach(f"nota_fiscal_{pagamento.id}.pdf", pdf.read(), "application/pdf")
+            email.send()
 
         elif status_mp == "rejected":
             pagamento.status = StatusPagamento.REJEITADO
@@ -136,7 +193,7 @@ def verificar_pagamento_com_retries(self, pagamento_id):
             send_mail(assunto, mensagem_txt, EMAIL_REMETENTE, [pagamento.usuario.email], html_message=mensagem_html)
 
         else:
-            raise self.retry(countdown=90)  # 90 segundos = 1.5 minutos
+            raise self.retry(countdown=90)
 
     except self.MaxRetriesExceededError:
         assunto = "⏳ Pagamento Pendente"

@@ -7,9 +7,13 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     build-essential \
+    python3-dev \
     libpq-dev \
     postgresql-client \
     ca-certificates \
+    libjpeg-dev \
+    libfreetype6-dev \
+    zlib1g-dev \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
