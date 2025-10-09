@@ -13,6 +13,7 @@ from servico.models import Servico
 from rest_framework.response import Response
 from rest_framework import status
 from datetime import date, datetime
+from .tasks import enviar_email_avaliacao
 
 class AgendamentoViewSet(viewsets.ModelViewSet):
     queryset = Agendamento.objects.all()
@@ -34,6 +35,25 @@ class AgendamentoAvaliacaoViewSet(viewsets.ModelViewSet):
         from rest_framework.renderers import JSONRenderer
         return [JSONRenderer()]
 
+    @action(detail=True, methods=["post"], url_path="marcar-compareceu")
+    def marcar_compareceu(self, request, identificador=None):
+        agendamento = self.get_object()
+        if agendamento.compareceu_agendamento:
+            return Response(
+                {"message": "Agendamento já marcado como compareceu."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        agendamento.compareceu_agendamento = True
+        agendamento.save()
+
+        enviar_email_avaliacao.delay(agendamento.id, agendamento.cliente.email)
+
+        return Response(
+            {"message": "Agendamento marcado como compareceu e e-mail enviado."},
+            status=status.HTTP_200_OK
+        )
+
     @action(detail=True, methods=["post"], url_path="avaliar")
     def avaliar(self, request, identificador=None):
         agendamento = self.get_object()
@@ -48,6 +68,38 @@ class AgendamentoAvaliacaoViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["get"], url_path="sem-comparecimento")
+    def sem_comparecimento(self, request):
+        empresa_id = request.query_params.get("empresa_id")
+        print("EmrpesaID ", empresa_id)
+        if not empresa_id:
+            return Response(
+                {"erro": "Parâmetro 'empresa_id' é obrigatório."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            empresa = Empresa.objects.get(id=empresa_id)
+        except Empresa.DoesNotExist:
+            return Response(
+                {"erro": "Empresa não encontrada."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if empresa.tipo == "Serviço":
+            agendamentos = Agendamento.objects.filter(
+                funcionario__empresas__id=empresa_id,
+                compareceu_agendamento=False
+            ).order_by('data', 'hora')
+        else:
+            agendamentos = Agendamento.objects.filter(
+                locacao__in=empresa.locacoes.all(),
+                compareceu_agendamento=False
+            ).order_by('data', 'hora')
+
+        serializer = AgendamentoSerializer(agendamentos, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class AgendamentoCreateView(APIView):
     def post(self, request, *args, **kwargs):

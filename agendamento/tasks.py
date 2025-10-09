@@ -1,8 +1,8 @@
 from celery import shared_task
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.utils import timezone
 from datetime import datetime
-
+from django.conf import settings
 from empresa.models import Empresa
 from .models import Agendamento
 
@@ -200,3 +200,42 @@ def enviar_email_agendamento_empresa(agendamento_id):
         [empresa.email],
         html_message=mensagem_html,
     )
+
+@shared_task
+def enviar_email_avaliacao(agendamento_id, cliente_email):
+    try:
+        agendamento = Agendamento.objects.get(id=agendamento_id)
+    except Agendamento.DoesNotExist:
+        return
+
+    avaliacao_url = f"{getattr(settings, 'SITE_URL', 'https://vemagendar.com.br')}/avaliacao/{agendamento.identificador}/"
+
+    assunto = "Sua avaliação do agendamento"
+    mensagem_txt = (
+        f"Olá {agendamento.cliente},\n\n"
+        f"Obrigado por participar do nosso serviço!\n"
+        f"Acesse sua avaliação aqui: {avaliacao_url}"
+    )
+
+    mensagem_html = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; color: #333; background:#f9f9f9; padding:20px;">
+        <div style="max-width:600px; margin:auto; background:#fff; padding:25px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+          <h2 style="color:#2c7be5;">Avalie seu Agendamento</h2>
+          <p>Olá <b>{agendamento.cliente}</b>,</p>
+          <p>Obrigado por participar do nosso serviço!</p>
+          <p><a href="{avaliacao_url}" style="color:#2c7be5; font-weight:bold;">Clique aqui para avaliar</a></p>
+        </div>
+      </body>
+    </html>
+    """
+
+    email_msg = EmailMessage(
+        subject=assunto,
+        body=mensagem_txt,
+        from_email=getattr(settings, 'EMAIL_REMETENTE', 'vemagendar@gmail.com'),
+        to=[cliente_email],
+    )
+    email_msg.content_subtype = "html"
+    email_msg.body = mensagem_html
+    email_msg.send(fail_silently=False)
