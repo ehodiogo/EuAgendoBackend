@@ -72,7 +72,6 @@ class AgendamentoAvaliacaoViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="sem-comparecimento")
     def sem_comparecimento(self, request):
         empresa_id = request.query_params.get("empresa_id")
-        print("EmrpesaID ", empresa_id)
         if not empresa_id:
             return Response(
                 {"erro": "Parâmetro 'empresa_id' é obrigatório."},
