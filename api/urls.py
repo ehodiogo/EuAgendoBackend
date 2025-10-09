@@ -2,7 +2,7 @@
 from servico.views import ServicoViewSet, ServicoCreate, ServicosCriadosUsuarioEmpresaView, RemoverServicoEmpresaView
 from servico.views import AdicionarServicoFuncionariosView, AdicionarServicosFuncionario, RemoverServicosFuncionarioView, EditarServicoView
 from empresa.views import EmpresaViewSet, EmpresaServicoViewSet, FinanceiroView, EmpresaCreate, EditarEmpresaView, RemoverEmpresaView
-from core.views import ImagemViewSet
+from core.views import ImagemViewSet, enviar_contato
 from cliente.views import ClienteViewSet
 from agendamento.views import AgendamentoAvaliacaoViewSet, AgendamentoViewSet, AgendamentoCreateView, AgendamentosHojeView, AgendamentoDetailView, AgendamentoCancelarView
 from funcionario.views import FuncionarioViewSet, FuncionarioAgendamentoView, FuncionariosCriadosView, RemoverFuncionarioView, EditarFuncionarioView
@@ -72,4 +72,5 @@ urlpatterns += [
     path('remover-locacao/', RemoverLocacaoView.as_view(), name='remover_locacao'),
     path('editar-locacao/', EditarLocacaoView.as_view(), name='editar_locacao'),
     path('confirmar-conta/', ConfirmEmailView.as_view(), name='confirmar-conta'),
+    path('contato/enviar/', enviar_contato, name='enviar_contato'),
 ]
