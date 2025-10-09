@@ -14,6 +14,10 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     zlib1g-dev \
+    pkg-config \
+    libcairo2-dev \
+    meson \
+    ninja-build \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
