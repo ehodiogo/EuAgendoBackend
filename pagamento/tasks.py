@@ -69,6 +69,19 @@ def gerar_nota_pdf_profissional(pagamento):
     pdf_file.seek(0)
     return pdf_file
 
+@shared_task
+def cancelar_plano_usuario(plano_usuario_id):
+    from plano.models import PlanoUsuario
+
+    try:
+        user_plan = PlanoUsuario.objects.get(id=plano_usuario_id)
+        user_plan.active = False
+        user_plan.changed_at = timezone.now()
+        user_plan.save()
+        print(f"Plano do usuário {user_plan.usuario.email} foi cancelado após 30 dias.")
+    except PlanoUsuario.DoesNotExist:
+        print(f"PlanoUsuario {plano_usuario_id} não encontrado.")
+
 @shared_task(bind=True, max_retries=20)
 def verificar_pagamento_com_retries(self, pagamento_id):
     try:
@@ -119,11 +132,14 @@ def verificar_pagamento_com_retries(self, pagamento_id):
             user_plan.expira_em = timezone.now() + timedelta(days=30)
             user_plan.save()
 
-            # Gerar PDF de nota fiscal
             pdf = gerar_nota_pdf_profissional(pagamento)
 
-            # Enviar e-mail com PDF anexado
-            assunto = "✅ Pagamento Aprovado e Nota Fiscal"
+            cancelar_plano_usuario.apply_async(
+                args=[user_plan.id],
+                eta=timezone.now() + timedelta(days=30)
+            )
+
+            assunto = "✅ Pagamento Apro vado e Nota Fiscal"
             mensagem_txt = (
                 f"Olá {user.first_name or user.email},\n\n"
                 f"Seu pagamento do plano {pagamento.plano.nome} foi aprovado com sucesso! 🎉\n"
