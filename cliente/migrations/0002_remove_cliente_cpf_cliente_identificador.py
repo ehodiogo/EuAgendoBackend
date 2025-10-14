@@ -1,15 +1,13 @@
-from django.db import migrations, models
-from cliente.models import Cliente
 import uuid
+from django.db import migrations, models
 
-def gerar_identificador_unico(apps, schema_editor):
+def gerar_identificadores_unicos(apps, schema_editor):
     Cliente = apps.get_model('cliente', 'Cliente')
     for cliente in Cliente.objects.all():
         cliente.identificador = str(uuid.uuid4())[:20]
         cliente.save(update_fields=['identificador'])
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('cliente', '0001_initial'),
     ]
@@ -22,7 +20,16 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='cliente',
             name='identificador',
-            field=models.CharField(blank=True, editable=False, max_length=20, unique=True),
+            field=models.CharField(
+                blank=True, editable=False, max_length=20, default='', unique=False
+            ),
         ),
-        migrations.RunPython(gerar_identificador_unico, reverse_code=migrations.RunPython.noop),
+        migrations.RunPython(gerar_identificadores_unicos, reverse_code=migrations.RunPython.noop),
+        migrations.AlterField(
+            model_name='cliente',
+            name='identificador',
+            field=models.CharField(
+                blank=True, editable=False, max_length=20, unique=True
+            ),
+        ),
     ]
