@@ -10,7 +10,8 @@ class Cliente(models.Model):
         max_length=20,
         unique=True,
         editable=False,
-        blank=True
+        blank=True,
+        null=True
     )
 
     def __str__(self):
