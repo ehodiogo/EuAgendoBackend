@@ -1,6 +1,8 @@
 from .models import Agendamento
 from rest_framework import serializers
 from funcionario.serializers import FuncionarioSerializer
+from empresa.models import Empresa
+from agendamento.models import Agendamento
 
 class AgendamentoSerializer(serializers.ModelSerializer):
 
@@ -10,6 +12,8 @@ class AgendamentoSerializer(serializers.ModelSerializer):
     servico_nome = serializers.SerializerMethodField()
     locacao_nome = serializers.SerializerMethodField()
     duracao_locacao = serializers.SerializerMethodField()
+    empresa_nome = serializers.SerializerMethodField()
+    preco = serializers.SerializerMethodField()
 
     def get_duracao_servico(self, obj):
         return obj.servico.duracao if obj.servico else None
@@ -28,6 +32,18 @@ class AgendamentoSerializer(serializers.ModelSerializer):
 
     def get_duracao_locacao(self, obj):
         return obj.locacao.duracao if obj.locacao else None
+
+    def get_empresa_nome(self, obj):
+        if obj.locacao:
+            return Empresa.objects.get(locacoes=obj.locacao).nome
+        else:
+            return Empresa.objects.get(servicos=obj.servico).nome
+
+    def get_preco(self, obj):
+        if obj.locacao:
+            return obj.locacao.preco
+        else:
+            return obj.servico.preco
 
     class Meta:
         model = Agendamento
