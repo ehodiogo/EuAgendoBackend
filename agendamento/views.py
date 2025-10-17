@@ -12,7 +12,7 @@ from cliente.models import Cliente
 from servico.models import Servico
 from rest_framework.response import Response
 from rest_framework import status
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from .tasks import enviar_email_avaliacao
 
 class AgendamentoViewSet(viewsets.ModelViewSet):
@@ -102,7 +102,6 @@ class AgendamentoAvaliacaoViewSet(viewsets.ModelViewSet):
 
 class AgendamentoCreateView(APIView):
     def post(self, request, *args, **kwargs):
-
         id_funcionario = request.data.get("id_funcionario")
         data = request.data.get("data")
         hora = request.data.get("hora")
@@ -113,23 +112,13 @@ class AgendamentoCreateView(APIView):
         duracao_minima = request.data.get("duracao_minima")
         descricao = request.data.get("descricao")
 
-        if id_funcionario and not servico_nome:
-            return Response(
-                {"erro": "Todos os campos são obrigatórios."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if not data or not hora or not cliente_nome or not cliente_email or not cliente_numero:
+            return Response({"erro": "Todos os campos são obrigatórios."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-        if (
-            not data
-            or not hora
-            or not cliente_nome
-            or not cliente_email
-            or not cliente_numero
-        ):
-            return Response(
-                {"erro": "Todos os campos são obrigatórios."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if id_funcionario and not servico_nome:
+            return Response({"erro": "Todos os campos são obrigatórios."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         try:
             data_hora = parse_datetime(f"{data}T{hora}:00")
@@ -140,120 +129,82 @@ class AgendamentoCreateView(APIView):
 
         funcionario = None
         servico = None
+        locacao = None
         if id_funcionario and servico_nome:
             try:
                 funcionario = Funcionario.objects.get(id=id_funcionario)
             except Funcionario.DoesNotExist:
-                return Response(
-                    {"erro": "Funcionário não encontrado."},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
+                return Response({"erro": "Funcionário não encontrado."},
+                                status=status.HTTP_404_NOT_FOUND)
 
             try:
                 servico = Servico.objects.get(nome=servico_nome, funcionarios=funcionario)
             except Servico.DoesNotExist:
-                return Response(
-                    {"erro": "Serviço não encontrado."}, status=status.HTTP_404_NOT_FOUND
-                )
+                return Response({"erro": "Serviço não encontrado."},
+                                status=status.HTTP_404_NOT_FOUND)
+        elif servico_nome:
+            try:
+                locacao = Locacao.objects.get(nome=servico_nome)
+            except Locacao.DoesNotExist:
+                return Response({"erro": "Locação não encontrada."},
+                                status=status.HTTP_404_NOT_FOUND)
 
-        cliente, created = Cliente.objects.get_or_create(
+        cliente, _ = Cliente.objects.get_or_create(
             nome=cliente_nome, email=cliente_email, telefone=cliente_numero
         )
 
-        locacao = None
-        if servico_nome and not id_funcionario:
-            locacao = Locacao.objects.get(nome=servico_nome)
-
-        agendamento = None
+        duracao_total = None
         if servico:
-            if int(servico.duracao) > int(duracao_minima):
+            duracao_total = int(servico.duracao)
+        elif locacao:
+            duracao_total = int(locacao.duracao)
 
-                quantia_agendamentos = int(servico.duracao) // int(duracao_minima)
+        duracao_minima = int(duracao_minima)
+        quantidade_blocos = max(1, duracao_total // duracao_minima)
 
-                agendamento = Agendamento.objects.create(
-                    funcionario=funcionario,
-                    data=data_hora.date(),
-                    hora=data_hora.time(),
-                    cliente=cliente,
-                    servico=servico,
-                    observacao=descricao
-                )
+        horarios = [
+            (datetime.combine(data_hora.date(), data_hora.time()) + timedelta(minutes=duracao_minima * i)).time()
+            for i in range(quantidade_blocos)
+        ]
 
-                for i in range(1, quantia_agendamentos):
-                    nova_hora = datetime.combine(datetime.today(), data_hora.time()) + timedelta(minutes=int(duracao_minima) * i)
-                    nova_hora = nova_hora.time()
+        for hora_check in horarios:
+            conflito = Agendamento.objects.filter(
+                data=data_hora.date(),
+                hora=hora_check,
+                funcionario=funcionario if funcionario else None,
+                locacao=locacao if locacao else None
+            ).exists()
+            if conflito:
+                return Response({"erro": f"O horário {hora_check} já está ocupado."},
+                                status=status.HTTP_400_BAD_REQUEST)
 
-                    agendamento = Agendamento.objects.create(
-                        funcionario=funcionario,
-                        data=data_hora.date(),
-                        hora=nova_hora,
-                        cliente=cliente,
-                        servico=servico,
-                        is_continuacao=True,
-                        observacao=descricao
-                    )
-            else:
+        agendamentos_criados = []
+        for i, hora_create in enumerate(horarios):
+            agendamento = Agendamento.objects.create(
+                data=data_hora.date(),
+                hora=hora_create,
+                cliente=cliente,
+                funcionario=funcionario,
+                servico=servico,
+                locacao=locacao,
+                is_continuacao=(i > 0),
+                observacao=descricao
+            )
+            agendamentos_criados.append(agendamento)
 
-                agendamento = Agendamento.objects.create(
-                    funcionario=funcionario,
-                    data=data_hora.date(),
-                    hora=data_hora.time(),
-                    cliente=cliente,
-                    servico=servico,
-                    observacao=descricao
-                )
-
-        if locacao:
-            if int(locacao.duracao) > int(duracao_minima):
-
-                quantia_agendamentos = int(locacao.duracao) // int(duracao_minima)
-
-                agendamento = Agendamento.objects.create(
-                    data=data_hora.date(),
-                    hora=data_hora.time(),
-                    cliente=cliente,
-                    locacao=locacao,
-                    observacao=descricao
-                )
-
-                for i in range(1, quantia_agendamentos):
-                    nova_hora = datetime.combine(datetime.today(), data_hora.time()) + timedelta(
-                        minutes=int(duracao_minima) * i)
-                    nova_hora = nova_hora.time()
-
-                    agendamento = Agendamento.objects.create(
-                        data=data_hora.date(),
-                        hora=nova_hora,
-                        cliente=cliente,
-                        locacao=locacao,
-                        is_continuacao=True,
-                        observacao=descricao
-                    )
-            else:
-
-                agendamento = Agendamento.objects.create(
-                    data=data_hora.date(),
-                    hora=data_hora.time(),
-                    cliente=cliente,
-                    locacao=locacao,
-                    observacao=descricao
-                )
-
-        return Response(
-            {
-                "id": agendamento.id,
-                "funcionario": funcionario.nome if funcionario else None,
-                "data": agendamento.data,
-                "hora": agendamento.hora,
-                "cliente_nome": cliente.nome,
-                "cliente_email": cliente.email,
-                "cliente_numero": cliente.telefone,
-                "servico_nome": servico.nome if servico else None,
-                "locacao_nome": locacao.nome if locacao else None,
-            },
-            status=status.HTTP_201_CREATED,
-        )
-
+        agendamento = agendamentos_criados[0]
+        return Response({
+            "id": agendamento.id,
+            "funcionario": funcionario.nome if funcionario else None,
+            "data": agendamento.data,
+            "hora": agendamento.hora,
+            "cliente_nome": cliente.nome,
+            "cliente_email": cliente.email,
+            "cliente_numero": cliente.telefone,
+            "servico_nome": servico.nome if servico else None,
+            "locacao_nome": locacao.nome if locacao else None,
+            "quantidade_continuacao": len(agendamentos_criados) - 1
+        }, status=status.HTTP_201_CREATED)
 
 class AgendamentosHojeView(APIView):
 
