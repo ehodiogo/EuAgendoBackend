@@ -55,6 +55,7 @@ services:
     command: celery -A backend worker -l info
     volumes:
       - .:/app
+      - ./BACKUPS:/app/../BACKUPS
     env_file:
       - .env
     depends_on:
@@ -71,6 +72,7 @@ services:
     command: celery -A backend beat -l info
     volumes:
       - .:/app
+      - ./BACKUPS:/app/../BACKUPS
     env_file:
       - .env
     depends_on:
