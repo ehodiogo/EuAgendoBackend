@@ -4,6 +4,7 @@ from django.utils import timezone
 from datetime import datetime
 from django.conf import settings
 from empresa.models import Empresa
+from usuario.models import PerfilUsuario
 from .models import Agendamento
 
 EMAIL_REMETENTE = "vemagendar@gmail.com"
@@ -160,6 +161,11 @@ def enviar_email_agendamento_empresa(agendamento_id):
         empresa = Empresa.objects.get(locacoes=agendamento.locacao)
 
     if not empresa.email:
+        return
+
+    perfil_usuario = PerfilUsuario.objects.filter(user=empresa.criado_por)
+
+    if not perfil_usuario.exists() or not perfil_usuario.first().receive_email_notifications:
         return
 
     assunto = f"📌 Novo agendamento: {agendamento.servico if agendamento.servico else agendamento.locacao}"

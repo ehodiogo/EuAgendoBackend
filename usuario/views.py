@@ -199,7 +199,7 @@ class PerfilUsuarioViewSet(viewsets.ModelViewSet):
             return Response({"erro": "Token de acesso inválido."}, status=status.HTTP_400_BAD_REQUEST)
 
         perfil, _ = PerfilUsuario.objects.get_or_create(user=usuario)
-        perfil.receive_email_notifications = request.data.get("receiveEmailNotifications", False)
+        perfil.receive_email_notifications = request.data.get("receive_email_notifications", False)
         perfil.save()
         return Response({"success": True})
 
