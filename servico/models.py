@@ -5,7 +5,7 @@ class Servico(models.Model):
 
     nome = models.CharField(max_length=100)
     descricao = models.TextField(null=True, blank=True)
-    duracao = models.CharField(max_length=100, null=True, blank=True, help_text="Em minutos")
+    duracao = models.IntegerField(null=True, blank=True, help_text="Em minutos")
     preco = models.DecimalField(max_digits=5, decimal_places=2)
 
     funcionarios = models.ManyToManyField('funcionario.Funcionario', related_name='servicos')
@@ -21,3 +21,12 @@ class Servico(models.Model):
     class Meta:
         verbose_name = 'Serviço'
         verbose_name_plural = 'Serviços'
+
+    def clean(self):
+        if self.duracao:
+            try:
+                duracao_int = int(self.duracao)
+                if duracao_int % 15 != 0:
+                    raise ValidationError({'duracao': 'A duração deve ser um múltiplo de 15 minutos.'})
+            except ValueError:
+                raise ValidationError({'duracao': 'A duração deve ser um número inteiro em minutos.'})

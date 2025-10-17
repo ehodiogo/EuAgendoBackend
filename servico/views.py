@@ -40,34 +40,25 @@ class ServicoCreate(APIView):
                 {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        nome = request.data.get("nome")
-        preco = request.data.get("preco")
-        duracao = request.data.get("duracao")
+        servico_data = {
+            "nome": request.data.get("nome"),
+            "preco": request.data.get("preco"),
+            "duracao": request.data.get("duracao"),
+            "criado_por": usuario.pk,
+        }
 
-        if not nome or not preco or not duracao:
-            return Response(
-                {"erro": "Todos os campos são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-
-            servico = Servico.objects.create(
-                nome=nome,
-                preco=preco,
-                duracao=duracao,
-                criado_por=usuario,
-            )
-
+        serializer = ServicoSerializer(data=servico_data)
+        if serializer.is_valid():
+            servico = serializer.save()
             return Response(
                 {
-                    "message": "Serviço criado com sucesso.",
-                    "servico": ServicoSerializer(servico).data,
+                    "message": "Serviço criado com sucesso.",
+                    "servico": serializer.data,
                 },
                 status=status.HTTP_201_CREATED,
             )
-
-        except Exception as e:
-            return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ServicosCriadosUsuarioEmpresaView(APIView):
 
