@@ -1,3 +1,4 @@
+from cliente.views import pontos_cliente
 from empresa.models import Empresa
 from locacao.models import Locacao
 from .models import Agendamento
@@ -8,7 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from django.utils.dateparse import parse_datetime
 from funcionario.models import Funcionario
-from cliente.models import Cliente
+from cliente.models import Cliente, PontoClienteEmpresa
 from servico.models import Servico
 from rest_framework.response import Response
 from rest_framework import status
@@ -46,6 +47,26 @@ class AgendamentoAvaliacaoViewSet(viewsets.ModelViewSet):
 
         agendamento.compareceu_agendamento = True
         agendamento.save()
+
+        empresa = None
+        pontos_ganhos = None
+
+        if agendamento.servico:
+            empresa = Empresa.objects.get(servicos=agendamento.servico)
+            pontos_ganhos = agendamento.servico.pontos_gerados
+
+        if agendamento.locacao:
+            empresa = Empresa.objects.get(locacoes=agendamento.locacao)
+            pontos_ganhos = agendamento.locacao.pontos_gerados
+
+        pontos_cliente, _ = PontoClienteEmpresa.objects.get_or_create(
+            cliente=agendamento.cliente,
+            empresa=empresa
+        )
+
+        if pontos_ganhos:
+            pontos_cliente.pontos += pontos_ganhos
+            pontos_cliente.save()
 
         enviar_email_avaliacao.delay(agendamento.id, agendamento.cliente.email)
 

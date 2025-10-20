@@ -3,7 +3,7 @@ from servico.views import ServicoViewSet, ServicoCreate, ServicosCriadosUsuarioE
 from servico.views import AdicionarServicoFuncionariosView, AdicionarServicosFuncionario, RemoverServicosFuncionarioView, EditarServicoView
 from empresa.views import EmpresaViewSet, EmpresaServicoViewSet, FinanceiroView, EmpresaCreate, EditarEmpresaView, RemoverEmpresaView
 from core.views import ImagemViewSet, enviar_contato
-from cliente.views import ClienteViewSet, cliente_detalhe, agendamentos_por_cliente
+from cliente.views import ClienteViewSet, cliente_detalhe, agendamentos_por_cliente, pontos_cliente
 from agendamento.views import AgendamentoAvaliacaoViewSet, AgendamentoViewSet, AgendamentoCreateView, AgendamentosHojeView, AgendamentoDetailView, AgendamentoCancelarView
 from funcionario.views import FuncionarioViewSet, FuncionarioAgendamentoView, FuncionariosCriadosView, RemoverFuncionarioView, EditarFuncionarioView
 from funcionario.views import FuncionarioCreate, AdicionarFuncionariosEmpresa, RemoverFuncionariosEmpresaView
@@ -75,5 +75,6 @@ urlpatterns += [
     path('contato/enviar/', enviar_contato, name='enviar_contato'),
     path('clientes/<str:identificador_cliente>/agendamentos/', agendamentos_por_cliente, name='agendamentos_por_cliente'),
     path('clientes/<str:identificador>/', cliente_detalhe, name='cliente_detalhe'),
+    path('cliente/<str:identificador>/pontos', pontos_cliente, name='pontos_cliente'),
 
 ]

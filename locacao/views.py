@@ -90,6 +90,8 @@ class CadastrarLocacaoView(APIView):
             'duracao': data.get('locacao_duracao'),
             'preco': data.get('locacao_preco'),
             'criado_por': usuario.pk,
+            'pontos_resgate': data.get('locacao_pontos_resgate'),
+            'pontos_gerados': data.get('locacao_pontos_gerados'),
         }
 
         uso_plano = PlanoUsuario.objects.get(
@@ -158,6 +160,8 @@ class EditarLocacaoView(APIView):
         locacao_descricao = data.get('locacao_descricao')
         locacao_duracao = data.get('locacao_duracao')
         locacao_preco = data.get('locacao_preco')
+        pontos_resgate = data.get('locacao_pontos_resgate')
+        pontos_gerados = data.get('locacao_pontos_gerados')
 
         if locacao_nome != locacao.nome and locacao_nome is not None:
             locacao.nome = locacao_nome
@@ -170,6 +174,12 @@ class EditarLocacaoView(APIView):
 
         if locacao_preco != locacao.preco and locacao_preco is not None:
             locacao.preco = locacao_preco
+
+        if pontos_resgate is not None and pontos_resgate != locacao.pontos_resgate:
+            locacao.pontos_resgate = pontos_resgate
+
+        if pontos_gerados is not None and pontos_gerados != locacao.pontos_gerados:
+            locacao.pontos_gerados = pontos_gerados
 
         locacao.save()
 

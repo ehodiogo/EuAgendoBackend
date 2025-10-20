@@ -45,6 +45,8 @@ class ServicoCreate(APIView):
             "preco": request.data.get("preco"),
             "duracao": request.data.get("duracao"),
             "criado_por": usuario.pk,
+            "pontos_resgate": request.data.get("servico_pontos_resgate"),
+            "pontos_gerados": request.data.get("servico_pontos_gerados"),
         }
 
         serializer = ServicoSerializer(data=servico_data)
@@ -366,6 +368,8 @@ class EditarServicoView(APIView):
         servico_duracao = request.data.get("servico_duracao")
         servico_valor = request.data.get("servico_valor")
         servico_descricao = request.data.get("servico_descricao")
+        pontos_resgate = request.data.get("servico_pontos_resgate")
+        pontos_gerados = request.data.get("servico_pontos_gerados")
 
         try:
 
@@ -382,6 +386,12 @@ class EditarServicoView(APIView):
 
             if servico_descricao:
                 servico.descricao = servico_descricao
+
+            if pontos_resgate is not None:
+                servico.pontos_resgate = pontos_resgate
+
+            if pontos_gerados is not None:
+                servico.pontos_gerados = pontos_gerados
 
             servico.save()
 
