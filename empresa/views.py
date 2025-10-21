@@ -17,23 +17,13 @@ class EmpresaViewSet(viewsets.ModelViewSet):
     queryset = Empresa.objects.all()
     serializer_class = EmpresaSerializer
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], url_path='buscar')
     def buscar(self, request):
         termo = request.query_params.get('q', '').strip().lower()
         if not termo:
-            return Response({"erro": "Parâmetro 'q' é obrigatório."}, status=400)
+            return Response({"erro": "Parâmetro 'q' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
-        empresas = Empresa.objects.filter(nome__icontains=termo) | Empresa.objects.filter(cnpj__icontains=termo)
-        serializer = self.get_serializer(empresas, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def buscar(self, request):
-        termo = request.query_params.get('q', '').strip().lower()
-        if not termo:
-            return Response({"erro": "Parâmetro 'q' é obrigatório."}, status=400)
-
-        empresas = Empresa.objects.filter(nome__icontains=termo) | Empresa.objects.filter(cnpj__icontains=termo)
+        empresas = Empresa.objects.filter(slug=termo)
         serializer = self.get_serializer(empresas, many=True)
         return Response(serializer.data)
 
@@ -42,13 +32,10 @@ class EmpresaServicoViewSet(viewsets.ModelViewSet):
     serializer_class = EmpresaServicoFuncionarioSerializer
 
     def get_queryset(self):
-        nome = self.request.query_params.get("empresa_nome", None)
-        cnpj = self.request.query_params.get("cnpj", None)
+        empresa_slug = self.request.query_params.get("empresa_slug", None)
 
-        if nome:
-            return Empresa.objects.filter(nome=nome)
-        elif cnpj:
-            return Empresa.objects.filter(cnpj=cnpj)
+        if empresa_slug:
+            return Empresa.objects.filter(slug=empresa_slug)
         else:
             return Empresa.objects.all()
 
@@ -183,14 +170,12 @@ class FinanceiroView(APIView):
             status=status.HTTP_200_OK,
         )
 
-
 class EmpresaCreate(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request):
 
         nome = request.data.get("nome")
-        cnpj = request.data.get("cnpj")
         tipo = request.data.get("tipo")
         endereco = request.data.get("endereco")
         bairro = request.data.get("bairro")
@@ -232,7 +217,7 @@ class EmpresaCreate(APIView):
 
         logo = request.data.get("logo")
 
-        if not nome or not cnpj or not endereco or not telefone or not email or not tipo:
+        if not nome or not endereco or not telefone or not email or not tipo:
             return Response(
                 {"erro": "Todos os campos são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST
             )
@@ -264,7 +249,6 @@ class EmpresaCreate(APIView):
 
             empresa = Empresa.objects.create(
                 nome=nome,
-                cnpj=cnpj,
                 tipo=tipo,
                 endereco=endereco,
                 bairro=bairro,
@@ -310,7 +294,6 @@ class EditarEmpresaView(APIView):
     def post(self, request):
 
         nome = request.data.get("nome")
-        cnpj = request.data.get("cnpj")
         tipo = request.data.get("tipo")
         endereco = request.data.get("endereco")
         bairro = request.data.get("bairro")
@@ -354,7 +337,7 @@ class EditarEmpresaView(APIView):
 
         empresa_id = request.data.get("empresa_id")
 
-        if not nome or not cnpj or not endereco or not telefone or not email or not empresa_id or not tipo:
+        if not nome or not endereco or not telefone or not email or not empresa_id or not tipo:
 
             return Response(
                 {"erro": "Todos os campos são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST
@@ -396,9 +379,6 @@ class EditarEmpresaView(APIView):
 
             if nome != empresa.nome and nome != None:
                 empresa.nome = nome
-
-            if cnpj != empresa.cnpj and cnpj != None:
-                empresa.cnpj = cnpj
 
             if tipo != empresa.tipo and tipo != None:
                 empresa.tipo = tipo

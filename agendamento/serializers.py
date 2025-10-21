@@ -1,3 +1,4 @@
+from cliente.models import PontoClienteEmpresa
 from .models import Agendamento
 from rest_framework import serializers
 from funcionario.serializers import FuncionarioSerializer
@@ -14,6 +15,8 @@ class AgendamentoSerializer(serializers.ModelSerializer):
     duracao_locacao = serializers.SerializerMethodField()
     empresa_nome = serializers.SerializerMethodField()
     preco = serializers.SerializerMethodField()
+    cliente_pontos = serializers.SerializerMethodField()
+    pontos_para_resgatar = serializers.SerializerMethodField()
 
     def get_duracao_servico(self, obj):
         return obj.servico.duracao if obj.servico else None
@@ -44,6 +47,27 @@ class AgendamentoSerializer(serializers.ModelSerializer):
             return obj.locacao.preco
         else:
             return obj.servico.preco
+
+    def get_pontos_para_resgatar(self, obj):
+        if obj.servico:
+            return obj.servico.pontos_resgate
+        else:
+            return obj.locacao.pontos_resgate
+
+    def get_cliente_pontos(self, obj):
+        empresa = None
+
+        if obj.servico:
+            empresa = Empresa.objects.get(servicos=obj.servico)
+        else:
+            empresa = Empresa.objects.get(locacoes=obj.locacao)
+
+        pontos_cliente_empresa, _ = PontoClienteEmpresa.objects.get_or_create(
+            empresa=empresa,
+            cliente=obj.cliente,
+        )
+
+        return pontos_cliente_empresa.pontos
 
     class Meta:
         model = Agendamento

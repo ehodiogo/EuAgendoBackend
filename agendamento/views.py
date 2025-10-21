@@ -36,6 +36,36 @@ class AgendamentoAvaliacaoViewSet(viewsets.ModelViewSet):
         from rest_framework.renderers import JSONRenderer
         return [JSONRenderer()]
 
+    def _marcar_compareceu(self, agendamento):
+        if agendamento.compareceu_agendamento:
+            return False  # já estava marcado
+
+        agendamento.compareceu_agendamento = True
+        agendamento.save()
+
+        empresa = None
+        pontos_ganhos = None
+
+        if agendamento.servico:
+            empresa = Empresa.objects.get(servicos=agendamento.servico)
+            pontos_ganhos = agendamento.servico.pontos_gerados
+
+        if agendamento.locacao:
+            empresa = Empresa.objects.get(locacoes=agendamento.locacao)
+            pontos_ganhos = agendamento.locacao.pontos_gerados
+
+        pontos_cliente, _ = PontoClienteEmpresa.objects.get_or_create(
+            cliente=agendamento.cliente,
+            empresa=empresa
+        )
+
+        if pontos_ganhos:
+            pontos_cliente.pontos += pontos_ganhos
+            pontos_cliente.save()
+
+        enviar_email_avaliacao.delay(agendamento.id, agendamento.cliente.email)
+        return True
+
     @action(detail=True, methods=["post"], url_path="marcar-compareceu")
     def marcar_compareceu(self, request, identificador=None):
         agendamento = self.get_object()
@@ -89,6 +119,45 @@ class AgendamentoAvaliacaoViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["post"], url_path="marcar-resgatado")
+    def marcar_resgatado(self, request, identificador=None):
+        agendamento = self.get_object()
+
+        empresa = None
+        if agendamento.servico:
+            empresa = Empresa.objects.get(servicos=agendamento.servico)
+        else:
+            empresa = Empresa.objects.get(locacoes=agendamento.locacao)
+
+        if not empresa:
+            return Response({"erro": "Empresa não encontrada para este agendamento."}, status=status.HTTP_404_NOT_FOUND)
+
+        pontos_cliente, _ = PontoClienteEmpresa.objects.get_or_create(
+            cliente=agendamento.cliente,
+            empresa=empresa
+        )
+
+        if agendamento.servico:
+            resgate = agendamento.servico.pontos_resgate or 0
+        else:
+            resgate = agendamento.locacao.pontos_resgate or 0
+
+        if pontos_cliente.pontos >= resgate:
+            pontos_cliente.pontos -= resgate
+            pontos_cliente.save()
+
+            self._marcar_compareceu(agendamento)
+
+        else:
+            return Response({"erro": "Pontos insuficientes para resgatar."}, status=status.HTTP_400_BAD_REQUEST)
+
+        pontos_cliente.save()
+
+        return Response({
+            "success": True,
+            "pontos_restantes": pontos_cliente.pontos
+        })
 
     @action(detail=False, methods=["get"], url_path="sem-comparecimento")
     def sem_comparecimento(self, request):

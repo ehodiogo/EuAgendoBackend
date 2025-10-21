@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from django.contrib.auth.models import User
+import uuid
 
 class Empresa(models.Model):
 
@@ -14,7 +15,6 @@ class Empresa(models.Model):
 
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='Serviço')
 
-    cnpj = models.CharField(max_length=100)
     endereco = models.CharField(max_length=100)
     bairro = models.CharField(max_length=100, null=True, blank=True)
     cidade = models.CharField(max_length=100, null=True, blank=True)
@@ -48,11 +48,11 @@ class Empresa(models.Model):
 
     def __str__(self):
         return self.nome
-    
+
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.nome)
-        super(Empresa, self).save(*args, **kwargs)
+            self.slug = f"{slugify(self.nome)}-{uuid.uuid4().hex[:8]}"
+        super().save(*args, **kwargs)
 
     def endereco_completo(self):
         partes = [self.endereco, self.bairro, self.cidade, self.estado, self.pais]

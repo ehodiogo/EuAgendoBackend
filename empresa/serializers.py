@@ -110,7 +110,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "nome",
-            "cnpj",
+            "slug",
             "tipo",
             "endereco",
             "bairro",
@@ -146,4 +146,4 @@ class EmpresaServicoFuncionarioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Empresa
-        fields = ['nome', 'cnpj', 'funcionarios', 'locacoes', 'tipo']
+        fields = ['nome', 'funcionarios', 'locacoes', 'tipo', 'slug']

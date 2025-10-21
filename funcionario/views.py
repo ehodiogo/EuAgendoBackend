@@ -22,22 +22,18 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
     search_fields = [
         "nome",
         "empresas__nome",
-        "empresas__cnpj",
     ]
 
     queryset = Funcionario.objects.all()
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        empresa_nome = self.request.query_params.get("empresa_nome")
-        empresa_cnpj = self.request.query_params.get("empresa_cnpj")
+        empresa_slug = self.request.query_params.get("empresa_slug")
 
         empresa = None
 
-        if empresa_nome:
-            empresa = Empresa.objects.filter(nome__icontains=empresa_nome)
-        if empresa_cnpj:
-            empresa = Empresa.objects.filter(cnpj__icontains=empresa_cnpj)
+        if empresa_slug:
+            empresa = Empresa.objects.filter(slug=empresa_slug)
 
         if empresa:
             queryset = empresa[0].funcionarios.all()
