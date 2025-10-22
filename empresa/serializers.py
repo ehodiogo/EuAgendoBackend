@@ -136,6 +136,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
             "assinatura_vencimento",
             'nota_empresa',
             'avaliacoes_empresa',
+            'is_online'
         )
 
 

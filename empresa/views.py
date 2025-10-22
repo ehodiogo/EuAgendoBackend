@@ -184,6 +184,7 @@ class EmpresaCreate(APIView):
         pais = request.data.get("pais")
         telefone = request.data.get("telefone")
         email = request.data.get("email")
+        is_online = request.data.get("is_online")
 
         horario_abertura_dia_semana = request.data.get("horario_abertura_dia_semana")
         horario_fechamento_dia_semana = request.data.get("horario_fechamento_dia_semana")
@@ -267,7 +268,8 @@ class EmpresaCreate(APIView):
                 abre_sabado=abre_sabado,
                 abre_domingo=abre_domingo,
                 logo=imagem_obj,
-                criado_por=usuario
+                criado_por=usuario,
+                is_online=is_online,
             )
 
             usuario.empresas.add(empresa)
@@ -302,6 +304,7 @@ class EditarEmpresaView(APIView):
         pais = request.data.get("pais")
         telefone = request.data.get("telefone")
         email = request.data.get("email")
+        is_online = request.data.get("is_online")
 
         horario_abertura_dia_semana = request.data.get("horario_abertura_dia_semana")
         horario_fechamento_dia_semana = request.data.get("horario_fechamento_dia_semana")
@@ -433,6 +436,9 @@ class EditarEmpresaView(APIView):
 
             if imagem_obj != empresa.logo and imagem_obj != None:
                 empresa.logo = imagem_obj
+
+            if is_online != empresa.is_online and is_online != None:
+                empresa.is_online = is_online
 
             empresa.save()
 

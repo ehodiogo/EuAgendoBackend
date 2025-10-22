@@ -45,6 +45,7 @@ class Empresa(models.Model):
     funcionarios = models.ManyToManyField('funcionario.Funcionario', related_name='empresas', blank=True)
 
     criado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='empresas_criadas')
+    is_online = models.BooleanField(default=False)
 
     def __str__(self):
         return self.nome
