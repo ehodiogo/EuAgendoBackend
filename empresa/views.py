@@ -216,9 +216,15 @@ class EmpresaCreate(APIView):
         else:
             abre_domingo = False
 
+        if is_online == "true":
+            is_online = True
+        else:
+            is_online = False
+
         logo = request.data.get("logo")
 
         if not nome or not endereco or not telefone or not email or not tipo:
+            print("Sem todos campos")
             return Response(
                 {"erro": "Todos os campos são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST
             )
@@ -226,6 +232,7 @@ class EmpresaCreate(APIView):
         usuario_token = request.data.get("usuario_token")
 
         if not usuario_token:
+            print("Sem token")
             return Response(
                 {"erro": "Token de acesso é obrigatório."}, status=status.HTTP_400_BAD_REQUEST
             )
@@ -233,6 +240,7 @@ class EmpresaCreate(APIView):
         usuario = Token.objects.filter(key=usuario_token).first().user
 
         if not usuario:
+            print("Sem usuário")
             return Response(
                 {"erro": "Token de acesso é inválido."}, status=status.HTTP_400_BAD_REQUEST
             )
@@ -287,6 +295,7 @@ class EmpresaCreate(APIView):
             )
 
         except Exception as e:
+            print("Exception", e)
             return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class EditarEmpresaView(APIView):
