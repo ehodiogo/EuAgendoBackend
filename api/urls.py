@@ -1,7 +1,7 @@
 
 from servico.views import ServicoViewSet, ServicoCreate, ServicosCriadosUsuarioEmpresaView, RemoverServicoEmpresaView
 from servico.views import AdicionarServicoFuncionariosView, AdicionarServicosFuncionario, RemoverServicosFuncionarioView, EditarServicoView
-from empresa.views import EmpresaViewSet, EmpresaServicoViewSet, FinanceiroView, EmpresaCreate, EditarEmpresaView, RemoverEmpresaView
+from empresa.views import EmpresaViewSet, EmpresaServicoViewSet, FinanceiroView, EmpresaCreate, EditarEmpresaView, RemoverEmpresaView, PrototipoCreate
 from core.views import ImagemViewSet, enviar_contato
 from cliente.views import ClienteViewSet, cliente_detalhe, agendamentos_por_cliente, pontos_cliente
 from agendamento.views import AgendamentoAvaliacaoViewSet, AgendamentoViewSet, AgendamentoCreateView, AgendamentosHojeView, AgendamentoDetailView, AgendamentoCancelarView
@@ -76,5 +76,6 @@ urlpatterns += [
     path('clientes/<str:identificador_cliente>/agendamentos/', agendamentos_por_cliente, name='agendamentos_por_cliente'),
     path('clientes/<str:identificador>/', cliente_detalhe, name='cliente_detalhe'),
     path('cliente/<str:identificador>/pontos', pontos_cliente, name='pontos_cliente'),
+    path('empresa-salvar/', PrototipoCreate.as_view(), name='empresa_salvar'),
 
 ]

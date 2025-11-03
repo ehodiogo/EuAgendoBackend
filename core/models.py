@@ -5,7 +5,7 @@ class Imagem(models.Model):
     empresa = models.ForeignKey('empresa.Empresa', on_delete=models.CASCADE, blank=True, null=True, related_name="imagens")
     funcionario = models.ForeignKey('funcionario.Funcionario', on_delete=models.CASCADE, blank=True, null=True, related_name="imagens")
     imagem = models.FileField(upload_to='imagens/', null=True, blank=True)
-    imagem_url = models.URLField(null=True, blank=True)
+    imagem_url = models.CharField(null=True, blank=True, max_length=300)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

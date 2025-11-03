@@ -58,7 +58,14 @@ class EmpresaSerializer(serializers.ModelSerializer):
 
     def get_servicos(self, obj):
         return [
-            {"nome": servico.nome, "preco": servico.preco, "duracao": servico.duracao}
+            {"id": servico.id, "nome": servico.nome, "preco": servico.preco, "duracao": servico.duracao, "pontos_gerados": servico.pontos_gerados, "pontos_resgate": servico.pontos_resgate, "funcionarios": [
+                {
+                    "id": f.id,
+                    "nome": f.nome,
+                    "foto": f.foto.imagem.url if f.foto and f.foto.imagem else f.foto.imagem_url if f.foto else None
+                }
+                for f in servico.funcionarios.all()
+            ]}
             for servico in obj.servicos.all()
         ]
 
@@ -68,14 +75,14 @@ class EmpresaSerializer(serializers.ModelSerializer):
             {
                 "id": funcionario.id,
                 "nome": funcionario.nome,
-                "foto": funcionario.foto.imagem.url if funcionario.foto else None or funcionario.foto.imagem_url if funcionario.foto else None,
+                "foto": funcionario.foto.imagem_url if funcionario.foto else None or funcionario.foto.imagem_url if funcionario.foto else None,
             }
             for funcionario in funcionarios
         ]
 
     def get_locacoes(self, obj):
         return [
-            {"nome": locacao.nome, "preco": locacao.preco, "duracao": locacao.duracao}
+            {"id": locacao.id, "nome": locacao.nome, "preco": locacao.preco, "duracao": locacao.duracao, "pontos_gerados": locacao.pontos_gerados, "pontos_resgate": locacao.pontos_resgate}
             for locacao in obj.locacoes.all()
         ]
 

@@ -6,7 +6,7 @@ class FuncionarioSerializer(serializers.ModelSerializer):
     foto = serializers.SerializerMethodField()
 
     def get_foto(self, obj):
-        return obj.foto.imagem.url.split("AWSAccessKeyId=")[0] if obj.foto else None
+        return obj.foto.imagem_url.split("AWSAccessKeyId=")[0] if obj.foto else None
 
     class Meta:
         model = Funcionario
@@ -18,7 +18,7 @@ class ServicoFuncionarioSerializer(serializers.ModelSerializer):
     foto_url = serializers.SerializerMethodField()
 
     def get_foto_url(self, obj):
-        return obj.foto.imagem.url.split("AWSAccessKeyId=")[0] if obj.foto else None
+        return obj.foto.imagem_url.split("AWSAccessKeyId=")[0] if obj.foto else None
 
     class Meta:
         model = Funcionario
