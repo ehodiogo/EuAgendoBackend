@@ -326,8 +326,6 @@ class PrototipoCreate(APIView):
             else:
                 para_almoco = True
 
-            print("Req data", request.data)
-
             if acao == 'cadastrar':
 
                 empresas_criadas = usuario.empresas.count()
@@ -527,16 +525,16 @@ class PrototipoCreate(APIView):
                                 nome=s.get("nome"),
                                 descricao=s.get("descricao"),
                                 preco=s.get("preco"),
-                                duracao=s.get("duracao")
+                                duracao=s.get("duracao"),
+                                pontos_gerados=s.get("pontos_gerados"),
+                                pontos_resgate=s.get("pontos_resgate"),
                             )
                             serv_objs.append(serv)
 
                             if s.get("funcionarios"):
                                 for f in s.get("funcionarios"):
-                                    servico.funcionarios.add(Funcionario.objects.get(id=f))
-
-
-                            servico.save()
+                                    serv.funcionarios.add(Funcionario.objects.get(id=f))
+                            serv.save()
 
                     for s in servicos:
                         if s.get("id"):
@@ -546,6 +544,8 @@ class PrototipoCreate(APIView):
                                 servico.descricao = s.get("descricao")
                                 servico.preco = s.get("preco")
                                 servico.duracao = s.get("duracao")
+                                servico.pontos_gerados = s.get("pontos_gerados")
+                                servico.pontos_resgate = s.get("pontos_resgate")
                                 servico.save()
 
                                 if s.get("funcionarios"):
