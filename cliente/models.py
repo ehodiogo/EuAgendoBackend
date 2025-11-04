@@ -1,8 +1,6 @@
 from django.db import models
 import uuid
-
 from empresa.models import Empresa
-
 
 class Cliente(models.Model):
 
