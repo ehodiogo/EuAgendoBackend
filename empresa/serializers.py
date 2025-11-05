@@ -16,6 +16,36 @@ class EmpresaSerializer(serializers.ModelSerializer):
     assinatura_vencimento = serializers.SerializerMethodField()
     avaliacoes_empresa = serializers.SerializerMethodField()
     nota_empresa = serializers.SerializerMethodField()
+    aberto_agora = serializers.SerializerMethodField()
+
+    def get_aberto_agora(self, obj):
+        agora = timezone.localtime().time()
+        dia_semana = timezone.localtime().weekday()
+
+        if dia_semana == 5:
+            if not obj.abre_sabado:
+                return False
+        elif dia_semana == 6:
+            if not obj.abre_domingo:
+                return False
+
+        if dia_semana in [5, 6]:
+            abertura = obj.horario_abertura_fim_de_semana
+            fechamento = obj.horario_fechamento_fim_de_semana
+        else:
+            abertura = obj.horario_abertura_dia_semana
+            fechamento = obj.horario_fechamento_dia_semana
+
+        if not abertura or not fechamento:
+            return False
+
+        aberto = abertura <= agora <= fechamento
+
+        if obj.para_almoco and obj.horario_pausa_inicio and obj.horario_pausa_fim:
+            if obj.horario_pausa_inicio <= agora <= obj.horario_pausa_fim:
+                aberto = False
+
+        return aberto
 
     def get_assinatura_ativa(self, obj):
 
@@ -143,7 +173,8 @@ class EmpresaSerializer(serializers.ModelSerializer):
             "assinatura_vencimento",
             'nota_empresa',
             'avaliacoes_empresa',
-            'is_online'
+            'is_online',
+            'aberto_agora'
         )
 
 

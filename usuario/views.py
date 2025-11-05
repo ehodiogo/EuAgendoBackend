@@ -234,7 +234,6 @@ class EmpresasUsuarioView(APIView):
             )
 
         empresas = usuario.empresas.all()
-        print("Empresas ", empresas)
         serializer = EmpresaSerializer(empresas, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
